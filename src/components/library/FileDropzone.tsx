@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, FileText, Presentation, FileCode, Loader2 } from 'lucide-react';
+import { UploadCloud, FileText, Presentation, FileCode, Loader2, Filter } from 'lucide-react';
 import { extractDocumentText } from '../../services/parsers/documentParser';
 import { db } from '../../db/database';
 import { LectureDocument } from '../../types';
@@ -22,10 +22,15 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onDocumentAdded }) =
     setProgressMsg(`Reading ${file.name}...`);
 
     try {
-      setProgressMsg('Extracting slides & lecture content...');
-      const { document, segments } = await extractDocumentText(file);
+      setProgressMsg('Extracting text & filtering non-essential content...');
+      const { document, segments, skippedSectionsCount } = await extractDocumentText(file);
 
-      setProgressMsg('Generating 3-5 min audio chapters...');
+      setProgressMsg(
+        skippedSectionsCount > 0
+          ? `Skipped ${skippedSectionsCount} TOC/Index/Blank pages • Generating audio chapters...`
+          : 'Generating 3-5 min audio chapters...'
+      );
+      
       const newDoc: LectureDocument = {
         ...document,
         id: `doc-${Date.now()}`
@@ -42,7 +47,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onDocumentAdded }) =
       setTimeout(() => {
         setIsProcessing(false);
         setProgressMsg('');
-      }, 800);
+      }, 900);
     }
   };
 
@@ -62,7 +67,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onDocumentAdded }) =
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-2">
       <input
         ref={fileInputRef}
         type="file"
@@ -96,14 +101,20 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onDocumentAdded }) =
             </div>
 
             <h3 className="text-base font-bold text-slate-100 tracking-tight">
-              Ingest Lecture or Reading
+              Ingest Books, Articles & Lectures
             </h3>
             <p className="text-xs text-slate-400 mt-1 max-w-[280px]">
-              Drop files here or tap to browse. We chunk them into 3-5 min commute audio chapters.
+              Drop files here or tap to browse. Automatically chunked into 3-5 min commute audio chapters.
             </p>
 
-            {/* Supported Formats (Clean text labels, no badge pills) */}
-            <div className="flex items-center justify-center space-x-3 mt-3.5 text-[11px] font-mono text-slate-400">
+            {/* Smart Content Filter Notice */}
+            <div className="flex items-center space-x-1.5 mt-3 text-[11px] font-mono text-cyan-400/90">
+              <Filter className="w-3 h-3" />
+              <span>Auto-filters Table of Contents, Index, Blank Pages & Captions</span>
+            </div>
+
+            {/* Supported Formats */}
+            <div className="flex items-center justify-center space-x-3 mt-2 text-[10px] font-mono text-slate-500">
               <span>PPTX</span>
               <span>•</span>
               <span>PDF</span>

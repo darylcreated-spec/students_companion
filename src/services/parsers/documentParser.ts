@@ -3,13 +3,17 @@ import { parsePptxFile } from './pptxParser';
 import { parseDocxFile } from './docxParser';
 import { parsePdfFile } from './pdfParser';
 import { parseTxtFile } from './txtParser';
+import { ContentSanitizer, SanitizerOptions, DEFAULT_SANITIZER_OPTIONS } from './contentSanitizer';
 
 const WORDS_PER_MINUTE = 140; // Spoken audio reading rate
-const TARGET_CHAPTER_DURATION_SEC = 240; // 4 minutes target per chapter (~560 words)
 
-export async function extractDocumentText(file: File): Promise<{
+export async function extractDocumentText(
+  file: File,
+  options: SanitizerOptions = DEFAULT_SANITIZER_OPTIONS
+): Promise<{
   document: Omit<LectureDocument, 'id'>;
   segments: LectureSegment[];
+  skippedSectionsCount: number;
 }> {
   const fileName = file.name.toLowerCase();
   let type: DocumentType = 'txt';
@@ -22,10 +26,10 @@ export async function extractDocumentText(file: File): Promise<{
     const parsed = await parsePptxFile(file);
     rawText = parsed.rawText;
     totalCount = parsed.slides.length;
-    rawItems = parsed.slides.map(s => ({
+    rawItems = parsed.slides.map((s) => ({
       title: s.title,
       text: s.combinedText,
-      pageOrSlide: s.slideNumber
+      pageOrSlide: s.slideNumber,
     }));
   } else if (fileName.endsWith('.docx')) {
     type = 'docx';
@@ -35,17 +39,17 @@ export async function extractDocumentText(file: File): Promise<{
     rawItems = parsed.paragraphs.map((p, idx) => ({
       title: p.length < 60 ? p : undefined,
       text: p,
-      pageOrSlide: idx + 1
+      pageOrSlide: idx + 1,
     }));
   } else if (fileName.endsWith('.pdf')) {
     type = 'pdf';
     const parsed = await parsePdfFile(file);
     rawText = parsed.fullText;
     totalCount = parsed.pages.length;
-    rawItems = parsed.pages.map(p => ({
+    rawItems = parsed.pages.map((p) => ({
       title: `Page ${p.pageNumber}`,
       text: p.text,
-      pageOrSlide: p.pageNumber
+      pageOrSlide: p.pageNumber,
     }));
   } else {
     type = 'txt';
@@ -55,13 +59,39 @@ export async function extractDocumentText(file: File): Promise<{
     rawItems = parsed.sections.map((s, idx) => ({
       title: s.title,
       text: s.content,
-      pageOrSlide: idx + 1
+      pageOrSlide: idx + 1,
     }));
   }
 
-  // Divide into 3-5 minute audio chapters
-  const segments = chunkIntoAudioChapters(rawItems, file.name.replace(/\.[^/.]+$/, ''));
-  const totalDurationMinutes = Math.max(1, Math.round(segments.reduce((acc, s) => acc + s.estimatedSeconds, 0) / 60));
+  // 1. Filter out TOC, Index, Copyright, Blank pages, and Picture legends
+  const cleanItems: { title?: string; text: string; pageOrSlide?: number }[] = [];
+  let skippedSectionsCount = 0;
+
+  for (const item of rawItems) {
+    const { skip, reason } = ContentSanitizer.shouldSkipSection(item.title, item.text, options);
+    if (skip) {
+      skippedSectionsCount++;
+      continue;
+    }
+
+    const sanitizedText = ContentSanitizer.cleanContentForAudio(item.text, options);
+    if (sanitizedText.split(/\s+/).filter(Boolean).length >= 8) {
+      cleanItems.push({
+        title: item.title,
+        text: sanitizedText,
+        pageOrSlide: item.pageOrSlide,
+      });
+    } else {
+      skippedSectionsCount++;
+    }
+  }
+
+  // 2. Divide remaining sanitized content into 3-5 minute audio chapters
+  const segments = chunkIntoAudioChapters(cleanItems, file.name.replace(/\.[^/.]+$/, ''));
+  const totalDurationMinutes = Math.max(
+    1,
+    Math.round(segments.reduce((acc, s) => acc + s.estimatedSeconds, 0) / 60)
+  );
 
   const cleanTitle = formatDocTitle(file.name);
 
@@ -76,9 +106,10 @@ export async function extractDocumentText(file: File): Promise<{
       durationMinutes: totalDurationMinutes,
       rawText,
       status: 'ready',
-      segments
+      segments,
     },
-    segments
+    segments,
+    skippedSectionsCount,
   };
 }
 
@@ -92,11 +123,11 @@ function chunkIntoAudioChapters(
         id: `seg-${Date.now()}-0`,
         chapterIndex: 0,
         title: 'Overview',
-        originalContent: 'No readable content found.',
-        synthesizedAudioText: 'This document contains no readable text.',
+        originalContent: 'No readable text was found after filtering non-essential content.',
+        synthesizedAudioText: 'This document contained no readable chapter text after filtering.',
         estimatedSeconds: 30,
-        keyPoints: ['No text found in document']
-      }
+        keyPoints: ['Document had no substantive chapters'],
+      },
     ];
   }
 
@@ -112,9 +143,11 @@ function chunkIntoAudioChapters(
     const item = items[i];
     const itemWordCount = item.text.split(/\s+/).filter(Boolean).length;
 
-    // Check if adding this item exceeds target chapter size (500 words ~ 3.5 mins)
-    if (accumulatedWords > 350 && (accumulatedWords + itemWordCount > 600 || (item.title && item.title.length > 5))) {
-      // Finalize current chapter
+    // Target ~450 words per chapter (~3.5 minutes of spoken audio)
+    if (
+      accumulatedWords > 350 &&
+      (accumulatedWords + itemWordCount > 600 || (item.title && item.title.length > 5 && !item.title.startsWith('Page ')))
+    ) {
       const originalContent = currentChunkTexts.join('\n\n');
       const estimatedSec = Math.max(45, Math.round((accumulatedWords / WORDS_PER_MINUTE) * 60));
       const synthesized = createConversationalNarrative(currentTitle, originalContent, chapterIndex + 1);
@@ -127,10 +160,10 @@ function chunkIntoAudioChapters(
         synthesizedAudioText: synthesized,
         estimatedSeconds: estimatedSec,
         slideNumber: currentSlide,
-        keyPoints: currentKeyPoints.length > 0 ? currentKeyPoints : extractQuickKeyPoints(originalContent)
+        keyPoints:
+          currentKeyPoints.length > 0 ? currentKeyPoints : extractQuickKeyPoints(originalContent),
       });
 
-      // Reset for next chapter
       chapterIndex++;
       currentChunkTexts = [];
       currentKeyPoints = [];
@@ -142,7 +175,7 @@ function chunkIntoAudioChapters(
     currentChunkTexts.push(item.text);
     accumulatedWords += itemWordCount;
 
-    // Extract potential bullets as key points
+    // Extract bullet points
     const lines = item.text.split('\n');
     for (const l of lines) {
       const cleanLine = l.trim().replace(/^[-•*–—\d.)]+\s*/, '');
@@ -152,7 +185,6 @@ function chunkIntoAudioChapters(
     }
   }
 
-  // Push remaining content
   if (currentChunkTexts.length > 0) {
     const originalContent = currentChunkTexts.join('\n\n');
     const estimatedSec = Math.max(45, Math.round((accumulatedWords / WORDS_PER_MINUTE) * 60));
@@ -166,7 +198,8 @@ function chunkIntoAudioChapters(
       synthesizedAudioText: synthesized,
       estimatedSeconds: estimatedSec,
       slideNumber: currentSlide,
-      keyPoints: currentKeyPoints.length > 0 ? currentKeyPoints : extractQuickKeyPoints(originalContent)
+      keyPoints:
+        currentKeyPoints.length > 0 ? currentKeyPoints : extractQuickKeyPoints(originalContent),
     });
   }
 
@@ -174,32 +207,32 @@ function chunkIntoAudioChapters(
 }
 
 function createConversationalNarrative(title: string, content: string, chapterNum: number): string {
-  // Clean bullet symbols and academic shorthand into smooth audio prose
   const cleanContent = content
     .replace(/^Slide \d+:\s*/gim, '')
     .replace(/^\[Speaker Notes:\s*/gim, 'Speaker note: ')
-    .replace(/\]$/gim, '')
-    .replace(/[•*–—]/g, ', ')
+    .replace(/^[-•*]\s*/gm, '')
     .replace(/\s+/g, ' ')
     .trim();
 
-  // Create engaging commuter lecture cadence
-  const opener = chapterNum === 1
-    ? `Starting Chapter ${chapterNum}, ${title}. `
-    : `Moving to Chapter ${chapterNum}, ${title}. `;
-
-  return `${opener}${cleanContent}. That wraps up this section. Next chapter is coming up.`;
+  return `Chapter ${chapterNum}: ${title}. ${cleanContent}`;
 }
 
-function extractQuickKeyPoints(content: string): string[] {
-  const sentences = content.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 25);
-  if (sentences.length <= 3) return sentences;
-  return [sentences[0], sentences[Math.floor(sentences.length / 2)], sentences[sentences.length - 1]];
+function extractQuickKeyPoints(text: string): string[] {
+  const sentences = text
+    .split(/[.!?]\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 25 && s.length < 130);
+
+  if (sentences.length === 0) {
+    return ['Key concept discussed in this section'];
+  }
+
+  return sentences.slice(0, 3);
 }
 
 function formatDocTitle(filename: string): string {
-  const base = filename.replace(/\.[^/.]+$/, '');
-  return base
+  return filename
+    .replace(/\.[^/.]+$/, '')
     .replace(/[_-]+/g, ' ')
-    .replace(/\b\w/g, l => l.toUpperCase());
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
