@@ -12,8 +12,9 @@ export class VoiceRecognitionService {
   private static microphoneStream: MediaStream | null = null;
   private static animFrameId: number | null = null;
   private static isListening = false;
-  private static silenceTimeoutId: any = null;
+  private static explicitlyStopped = false;
   private static accumulatedTranscript = '';
+  private static currentCallbacks: VoiceCaptureCallbacks | null = null;
 
   public static isSupported(): boolean {
     if (typeof window === 'undefined') return false;
@@ -25,7 +26,9 @@ export class VoiceRecognitionService {
 
   public static async startListening(callbacks: VoiceCaptureCallbacks): Promise<void> {
     this.stopListening();
+    this.explicitlyStopped = false;
     this.accumulatedTranscript = '';
+    this.currentCallbacks = callbacks;
 
     const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRec) {
@@ -34,7 +37,7 @@ export class VoiceRecognitionService {
     }
 
     try {
-      // 1. Initialize Microphone Audio Stream for Live Waveform
+      // 1. Initialize Microphone Audio Stream for Live Visualizer
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
           this.microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -50,59 +53,64 @@ export class VoiceRecognitionService {
         }
       }
 
-      // 2. Initialize SpeechRecognition instance
-      this.recognition = new SpeechRec();
-      this.recognition.continuous = true;
-      this.recognition.interimResults = true;
-      this.recognition.lang = 'en-US';
-
-      this.recognition.onstart = () => {
-        this.isListening = true;
-        callbacks.onStateChange('listening');
-      };
-
-      this.recognition.onresult = (event: any) => {
-        let interimText = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            this.accumulatedTranscript += ' ' + transcript;
-          } else {
-            interimText += transcript;
-          }
-        }
-
-        const fullCurrentText = (this.accumulatedTranscript + ' ' + interimText).trim();
-        callbacks.onTranscriptChange(fullCurrentText, false);
-
-        // Reset silence timer on active speech
-        clearTimeout(this.silenceTimeoutId);
-        this.silenceTimeoutId = setTimeout(() => {
-          // If 2.5 seconds of silence after speaking, finish transcription
-          if (this.accumulatedTranscript.trim().length > 0 || interimText.trim().length > 0) {
-            callbacks.onTranscriptChange((this.accumulatedTranscript + ' ' + interimText).trim(), true);
-          }
-        }, 2500);
-      };
-
-      this.recognition.onerror = (event: any) => {
-        if (event.error === 'no-speech') {
-          return;
-        }
-        callbacks.onError(`Speech recognition error: ${event.error}`);
-        callbacks.onStateChange('error');
-      };
-
-      this.recognition.onend = () => {
-        this.isListening = false;
-        callbacks.onStateChange('idle');
-      };
-
-      this.recognition.start();
+      this.initRecognition(SpeechRec, callbacks);
     } catch (err: any) {
       callbacks.onError(err.message || 'Failed to start speech recognition');
       callbacks.onStateChange('error');
     }
+  }
+
+  private static initRecognition(SpeechRec: any, callbacks: VoiceCaptureCallbacks) {
+    this.recognition = new SpeechRec();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.lang = 'en-US';
+
+    this.recognition.onstart = () => {
+      this.isListening = true;
+      callbacks.onStateChange('listening');
+    };
+
+    this.recognition.onresult = (event: any) => {
+      let interimText = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          this.accumulatedTranscript += ' ' + transcript;
+        } else {
+          interimText += transcript;
+        }
+      }
+
+      const fullCurrentText = (this.accumulatedTranscript + ' ' + interimText).trim();
+      callbacks.onTranscriptChange(fullCurrentText, false);
+    };
+
+    this.recognition.onerror = (event: any) => {
+      if (event.error === 'no-speech' || event.error === 'network') {
+        // In continuous mode, harmless network or quiet period renegotiation
+        return;
+      }
+      console.warn('Speech recognition warning:', event.error);
+    };
+
+    // Infinite Continuous Listening: Auto-restart if browser buffer finishes and user didn't stop
+    this.recognition.onend = () => {
+      if (this.isListening && !this.explicitlyStopped) {
+        try {
+          // Reconnect instantly for continuous recording
+          this.recognition?.start();
+        } catch (_) {
+          this.isListening = false;
+          callbacks.onStateChange('idle');
+        }
+      } else {
+        this.isListening = false;
+        callbacks.onStateChange('idle');
+      }
+    };
+
+    this.recognition.start();
   }
 
   private static startAudioLevelPolling(callbacks: VoiceCaptureCallbacks) {
@@ -119,7 +127,7 @@ export class VoiceRecognitionService {
         sum += dataArray[i];
       }
       const average = sum / dataArray.length;
-      const normalizedLevel = Math.min(1.0, average / 80); // 0 to 1.0
+      const normalizedLevel = Math.min(1.0, average / 80);
 
       callbacks.onAudioLevelChange(normalizedLevel);
       this.animFrameId = requestAnimationFrame(poll);
@@ -129,7 +137,9 @@ export class VoiceRecognitionService {
   }
 
   public static stopListening(): string {
-    clearTimeout(this.silenceTimeoutId);
+    this.explicitlyStopped = true;
+    this.isListening = false;
+
     if (this.animFrameId) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
@@ -153,7 +163,10 @@ export class VoiceRecognitionService {
       this.recognition = null;
     }
 
-    this.isListening = false;
     return this.accumulatedTranscript.trim();
+  }
+
+  public static getIsListening(): boolean {
+    return this.isListening;
   }
 }
