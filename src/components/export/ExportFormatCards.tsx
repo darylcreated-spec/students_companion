@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileDown, FileText, Download, Check, Sparkles } from 'lucide-react';
+import { FileText, Download, Check } from 'lucide-react';
 import { LectureDocument, CommuteNote } from '../../types';
 import { downloadPdfStudyGuide } from '../../services/export/pdfExporter';
 import { downloadDocxStudyGuide } from '../../services/export/docxExporter';
@@ -54,7 +54,6 @@ export const ExportFormatCards: React.FC<ExportFormatCardsProps> = ({
       id: 'pdf' as const,
       title: 'PDF Study Sheet',
       desc: 'Print-ready formatted document with tables & exam flags',
-      badge: '.PDF',
       color: 'from-red-500/20 to-red-500/5 text-red-300 border-red-500/30',
       btnColor: 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30',
     },
@@ -62,7 +61,6 @@ export const ExportFormatCards: React.FC<ExportFormatCardsProps> = ({
       id: 'docx' as const,
       title: 'Word Document',
       desc: 'Editable Microsoft Word guide with structured headers',
-      badge: '.DOCX',
       color: 'from-blue-500/20 to-blue-500/5 text-blue-300 border-blue-500/30',
       btnColor: 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30',
     },
@@ -70,7 +68,6 @@ export const ExportFormatCards: React.FC<ExportFormatCardsProps> = ({
       id: 'md' as const,
       title: 'Markdown / Notion',
       desc: 'Clean GitHub-flavored markdown for Obsidian & Notion',
-      badge: '.MD',
       color: 'from-cyan-500/20 to-cyan-500/5 text-cyan-300 border-cyan-500/30',
       btnColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30',
     },
@@ -79,7 +76,7 @@ export const ExportFormatCards: React.FC<ExportFormatCardsProps> = ({
   return (
     <div className="w-full space-y-2.5">
       <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block font-semibold">
-        SELECT EXPORT FORMAT
+        Select Export Format
       </span>
 
       {formats.map((f) => {
@@ -95,11 +92,8 @@ export const ExportFormatCards: React.FC<ExportFormatCardsProps> = ({
                 <FileText className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-                  <span>{f.title}</span>
-                  <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-900 border border-white/10">
-                    {f.badge}
-                  </span>
+                <h4 className="text-sm font-bold text-slate-100">
+                  {f.title}
                 </h4>
                 <p className="text-[11px] text-slate-400 font-mono mt-0.5 line-clamp-1">
                   {f.desc}

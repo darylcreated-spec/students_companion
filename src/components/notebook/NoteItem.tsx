@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Play, Trash2, Tag, AlertTriangle, CheckSquare, Lightbulb } from 'lucide-react';
+import { Play, Trash2, AlertTriangle, CheckSquare, Lightbulb } from 'lucide-react';
 import { CommuteNote } from '../../types';
 
 interface NoteItemProps {
@@ -19,32 +19,29 @@ export const NoteItem: React.FC<NoteItemProps> = ({
         return {
           label: 'EXAM FLAG',
           icon: AlertTriangle,
-          borderColor: 'border-rose-500/40',
-          bgColor: 'bg-rose-950/30',
+          borderColor: 'border-rose-500/30',
+          bgColor: 'bg-rose-950/20',
           textColor: 'text-rose-400',
-          badgeBg: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-          glow: 'shadow-[0_0_15px_rgba(244,63,94,0.15)]',
+          glow: 'shadow-[0_0_15px_rgba(244,63,94,0.1)]',
         };
       case 'action':
         return {
           label: 'ACTION ITEM',
           icon: CheckSquare,
-          borderColor: 'border-amber-500/40',
-          bgColor: 'bg-amber-950/30',
+          borderColor: 'border-amber-500/30',
+          bgColor: 'bg-amber-950/20',
           textColor: 'text-amber-400',
-          badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-          glow: 'shadow-[0_0_15px_rgba(245,158,11,0.15)]',
+          glow: 'shadow-[0_0_15px_rgba(245,158,11,0.1)]',
         };
       case 'concept':
       default:
         return {
           label: 'KEY CONCEPT',
           icon: Lightbulb,
-          borderColor: 'border-cyan-500/40',
-          bgColor: 'bg-cyan-950/30',
+          borderColor: 'border-cyan-500/30',
+          bgColor: 'bg-cyan-950/20',
           textColor: 'text-cyan-400',
-          badgeBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-          glow: 'shadow-[0_0_15px_rgba(34,211,238,0.15)]',
+          glow: 'shadow-[0_0_15px_rgba(34,211,238,0.1)]',
         };
     }
   };
@@ -58,20 +55,18 @@ export const NoteItem: React.FC<NoteItemProps> = ({
     >
       {/* Top Header Row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          {/* Category Chip */}
-          <span
-            className={`px-2 py-0.5 rounded-md border text-[10px] font-mono font-bold flex items-center space-x-1 ${config.badgeBg}`}
-          >
-            <Icon className="w-3 h-3" />
+        <div className="flex items-center space-x-3">
+          {/* Category Label (Clean colored text and icon, no badge pill) */}
+          <div className={`text-xs font-mono font-bold flex items-center space-x-1.5 ${config.textColor}`}>
+            <Icon className="w-3.5 h-3.5" />
             <span>{config.label}</span>
-          </span>
+          </div>
 
           {/* Timestamp Bookmark Button */}
           <button
             onClick={() => onJumpToAudio(note.timestampSeconds)}
             title="Jump to this moment in lecture audio"
-            className="px-2 py-0.5 rounded-md bg-slate-900/90 border border-slate-700 hover:border-cyan-400 text-[11px] font-mono font-bold text-slate-300 hover:text-cyan-300 flex items-center space-x-1 transition-colors group"
+            className="px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-400 text-[11px] font-mono font-bold text-slate-300 hover:text-cyan-300 flex items-center space-x-1 transition-colors group"
           >
             <Play className="w-2.5 h-2.5 fill-current text-cyan-400 group-hover:scale-110 transition-transform" />
             <span>{note.timestampFormatted}</span>

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, FileText, Presentation, FileCode, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { UploadCloud, FileText, Presentation, FileCode, Loader2 } from 'lucide-react';
 import { extractDocumentText } from '../../services/parsers/documentParser';
 import { db } from '../../db/database';
 import { LectureDocument } from '../../types';
@@ -76,7 +76,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onDocumentAdded }) =
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !isProcessing && fileInputRef.current?.click()}
-        className={`w-full p-5 rounded-3xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center ${
+        className={`w-full p-6 rounded-3xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center ${
           isDragging
             ? 'border-cyan-400 bg-cyan-950/40 shadow-[0_0_25px_rgba(34,211,238,0.3)]'
             : 'border-slate-700/80 hover:border-cyan-400/60 bg-[#0E1426]/60 hover:bg-[#0E1426]/90'
@@ -102,20 +102,15 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({ onDocumentAdded }) =
               Drop files here or tap to browse. We chunk them into 3-5 min commute audio chapters.
             </p>
 
-            {/* Supported Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3.5">
-              <span className="px-2 py-0.5 rounded-md bg-rose-950/60 border border-rose-500/30 text-rose-300 text-[10px] font-mono font-bold flex items-center gap-1">
-                <Presentation className="w-3 h-3" /> .PPTX
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-red-950/60 border border-red-500/30 text-red-300 text-[10px] font-mono font-bold flex items-center gap-1">
-                <FileText className="w-3 h-3" /> .PDF
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-blue-950/60 border border-blue-500/30 text-blue-300 text-[10px] font-mono font-bold flex items-center gap-1">
-                <FileText className="w-3 h-3" /> .DOCX
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono font-bold flex items-center gap-1">
-                <FileCode className="w-3 h-3" /> .TXT / .MD
-              </span>
+            {/* Supported Formats (Clean text labels, no badge pills) */}
+            <div className="flex items-center justify-center space-x-3 mt-3.5 text-[11px] font-mono text-slate-400">
+              <span>PPTX</span>
+              <span>•</span>
+              <span>PDF</span>
+              <span>•</span>
+              <span>DOCX</span>
+              <span>•</span>
+              <span>TXT / MD</span>
             </div>
           </>
         )}

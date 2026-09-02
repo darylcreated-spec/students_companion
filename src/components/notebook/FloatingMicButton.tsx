@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, Check, X, Loader2, Sparkles, Volume2 } from 'lucide-react';
+import { Mic, Check, X, Loader2, Sparkles } from 'lucide-react';
 import { WaveformVisualizer } from '../audio/WaveformVisualizer';
 
 interface FloatingMicButtonProps {
@@ -23,11 +23,10 @@ export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({
   onStartDictation,
   onFinalizeDictation,
   onCancelDictation,
-  onManualTextChange,
 }) => {
   return (
     <>
-      {/* Floating Action Trigger Button (Bottom-Right or Thumb Reachable) */}
+      {/* Floating Action Trigger Button (Bottom-Right) */}
       {!isRecording && !isProcessing && (
         <div className="absolute bottom-20 right-5 z-40">
           <button
@@ -44,7 +43,7 @@ export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({
       {(isRecording || isProcessing) && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-obsidian-950/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-sm mx-auto rounded-3xl bg-[#0E1426] border border-amber-400/50 shadow-[0_0_40px_rgba(251,191,36,0.3)] p-5 flex flex-col space-y-4">
-            {/* Header with Live Lecture Timestamp Badge */}
+            {/* Header with Live Lecture Timestamp */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
@@ -53,8 +52,8 @@ export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({
                 </span>
               </div>
 
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-xs font-mono text-cyan-300 font-bold">
-                ⏱️ {capturedTimestamp}
+              <span className="text-xs font-mono text-cyan-300 font-bold">
+                {capturedTimestamp}
               </span>
             </div>
 

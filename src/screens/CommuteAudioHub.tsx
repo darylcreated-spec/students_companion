@@ -72,13 +72,13 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
       {/* Top Glass Card: Lecture & Chapter Metadata */}
       <div className="p-4 rounded-3xl bg-[#0E1426]/80 border border-white/10 shadow-lg backdrop-blur-xl flex flex-col space-y-2 relative shrink-0">
         <div className="flex items-center justify-between">
-          <span className="px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-[10px] font-mono font-bold text-cyan-300">
-            NOW PLAYING
+          <span className="text-[11px] font-mono text-cyan-400 font-semibold uppercase tracking-wider">
+            Current Lecture
           </span>
           <button
             onClick={() => onRewriteWithGemini(playerState.currentSegmentIndex)}
             disabled={isRewriting}
-            className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-slate-900 border border-cyan-400/30 text-[10px] font-mono text-cyan-300 hover:border-cyan-400 transition-colors"
+            className="flex items-center space-x-1 px-3 py-1 rounded-xl bg-slate-900 border border-cyan-400/30 text-[11px] font-mono text-cyan-300 hover:border-cyan-400 transition-colors"
           >
             <Sparkles className={`w-3 h-3 text-cyan-400 ${isRewriting ? 'animate-spin' : ''}`} />
             <span>{isRewriting ? 'Rewriting...' : 'Gemini Radio Polish'}</span>

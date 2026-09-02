@@ -1,6 +1,6 @@
 import React from 'react';
 import { LectureDocument, CommuteNote } from '../../types';
-import { BookOpen, AlertTriangle, CheckSquare, Lightbulb } from 'lucide-react';
+import { BookOpen, AlertTriangle, CheckSquare } from 'lucide-react';
 
 interface StudyGuidePreviewProps {
   document: LectureDocument | null;
@@ -25,14 +25,13 @@ export const StudyGuidePreview: React.FC<StudyGuidePreviewProps> = ({
   const docNotes = notes.filter(n => n.documentId === document.id);
   const examNotes = docNotes.filter(n => n.category === 'exam');
   const actionNotes = docNotes.filter(n => n.category === 'action');
-  const conceptNotes = docNotes.filter(n => n.category === 'concept');
 
   return (
     <div className="w-full rounded-3xl bg-[#0E1426]/80 border border-cyan-400/20 shadow-xl p-5 flex flex-col space-y-4 max-h-[380px] overflow-y-auto">
       {/* Header */}
       <div className="border-b border-white/10 pb-3">
-        <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider font-semibold">
-          LIVE COMPILED STUDY GUIDE
+        <span className="text-[11px] font-mono text-cyan-400 uppercase tracking-wider font-semibold">
+          Compiled Study Guide
         </span>
         <h3 className="text-base font-bold text-slate-100 mt-0.5">
           {document.title}
@@ -45,7 +44,7 @@ export const StudyGuidePreview: React.FC<StudyGuidePreviewProps> = ({
       {/* Chapters Preview */}
       <div className="space-y-3">
         <h4 className="text-xs font-mono text-slate-300 uppercase tracking-wider font-bold">
-          📖 Chapters & Key Concepts
+          Chapters & Key Concepts
         </h4>
         {document.segments.map((seg, idx) => (
           <div key={seg.id} className="p-3 rounded-xl bg-slate-900/70 border border-slate-800">

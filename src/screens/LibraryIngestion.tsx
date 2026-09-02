@@ -3,8 +3,7 @@ import { LectureDocument } from '../types';
 import { FileDropzone } from '../components/library/FileDropzone';
 import { LectureCard } from '../components/library/LectureCard';
 import { GoogleDocsModal } from '../components/library/GoogleDocsModal';
-import { HardDrive, Cloud, Plus, Sparkles, FolderOpen } from 'lucide-react';
-import { db } from '../db/database';
+import { HardDrive, Cloud, Plus, FolderOpen } from 'lucide-react';
 
 interface LibraryIngestionProps {
   documents: LectureDocument[];
@@ -31,7 +30,7 @@ export const LibraryIngestion: React.FC<LibraryIngestionProps> = ({
 
   return (
     <div className="flex-1 flex flex-col p-4 pb-12 space-y-4 overflow-y-auto overscroll-contain">
-      {/* Top Storage & Offline Status Pill */}
+      {/* Top Storage Status Bar */}
       <div className="p-3.5 rounded-2xl bg-[#0E1426]/70 border border-white/5 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <HardDrive className="w-4 h-4 text-cyan-400" />
@@ -66,9 +65,6 @@ export const LibraryIngestion: React.FC<LibraryIngestionProps> = ({
             <FolderOpen className="w-3.5 h-3.5 text-cyan-400" />
             <span>Cached Audio Lectures</span>
           </h3>
-          <span className="text-[10px] font-mono text-emerald-400 font-semibold">
-            100% OFFLINE READY
-          </span>
         </div>
 
         {documents.length === 0 ? (

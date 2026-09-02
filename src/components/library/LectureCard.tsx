@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Trash2, Clock, Layers, Sparkles, FileText, Presentation } from 'lucide-react';
+import { Play, Pause, Trash2, Clock, Layers, FileText, Presentation } from 'lucide-react';
 import { LectureDocument } from '../../types';
 
 interface LectureCardProps {
@@ -41,14 +41,14 @@ export const LectureCard: React.FC<LectureCardProps> = ({
           : 'bg-[#0E1426]/70 hover:bg-[#0E1426] border border-white/10 hover:border-slate-600'
       }`}
     >
-      {/* Top Row: Type Badge & Action Controls */}
+      {/* Top Row: Format & Action Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <div className="p-1.5 rounded-lg bg-slate-900 border border-white/5">
             {getIcon()}
           </div>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
-            {document.type.toUpperCase()} • {document.totalPagesOrSlides || document.segments.length} SECTIONS
+          <span className="text-[11px] font-mono text-slate-300 font-medium uppercase">
+            {document.type.toUpperCase()} • {document.totalPagesOrSlides || document.segments.length} Sections
           </span>
         </div>
 
@@ -90,7 +90,7 @@ export const LectureCard: React.FC<LectureCardProps> = ({
         </p>
       </div>
 
-      {/* Meta Pills: Duration, Chapters, AI Status */}
+      {/* Meta Text: Duration & Chapters (No badge dots) */}
       <div className="flex items-center space-x-3 pt-1 border-t border-white/5 text-[11px] font-mono text-slate-400">
         <div className="flex items-center space-x-1 text-amber-300">
           <Clock className="w-3 h-3" />
@@ -99,10 +99,6 @@ export const LectureCard: React.FC<LectureCardProps> = ({
         <div className="flex items-center space-x-1">
           <Layers className="w-3 h-3 text-slate-500" />
           <span>{document.segments.length} chapters</span>
-        </div>
-        <div className="flex items-center space-x-1 ml-auto text-emerald-400 text-[10px]">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span>Ready</span>
         </div>
       </div>
     </div>

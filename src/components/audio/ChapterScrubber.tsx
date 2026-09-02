@@ -34,8 +34,8 @@ export const ChapterScrubber: React.FC<ChapterScrubberProps> = ({
     <div className="w-full flex flex-col space-y-2">
       {/* Chapter Indicator Header */}
       <div className="flex items-center justify-between text-xs font-mono">
-        <span className="px-2 py-0.5 rounded-md bg-cyan-950/70 border border-cyan-400/30 text-cyan-300 font-semibold text-[10px]">
-          CH {chapterNumber} OF {totalChapters}
+        <span className="text-cyan-300 font-semibold text-[11px]">
+          CHAPTER {chapterNumber} / {totalChapters}
         </span>
         <span className="text-slate-400 text-[11px] truncate max-w-[200px]">
           {chapterTitle}

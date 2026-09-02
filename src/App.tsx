@@ -10,11 +10,13 @@ import { LibraryIngestion } from './screens/LibraryIngestion';
 import { CommuteNotebook } from './screens/CommuteNotebook';
 import { ExportReview } from './screens/ExportReview';
 import { ApiKeyModal } from './components/common/ApiKeyModal';
+import { LoadingScreen } from './components/common/LoadingScreen';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useVoiceDictation } from './hooks/useVoiceDictation';
 import { GeminiService } from './services/ai/geminiService';
 
 export function App() {
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<NavTab>('audio');
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -150,99 +152,103 @@ export function App() {
   };
 
   return (
-    <MobileContainer>
-      {/* Top HUD Header */}
-      <TopHeader
-        title={activeDocument ? activeDocument.title : "The Student's Companion"}
-        subtitle={
-          activeDocument && currentSegment
-            ? `Ch ${playerState.currentSegmentIndex + 1}: ${currentSegment.title}`
-            : undefined
-        }
-        hasApiKey={!!settings.geminiApiKey}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-      />
-
-      {/* Screen Views */}
-      {activeTab === 'audio' && (
-        <CommuteAudioHub
-          document={activeDocument}
-          currentSegment={currentSegment}
-          playerState={playerState}
-          onTogglePlayPause={togglePlayPause}
-          onSkipBackward={() => skip(-15)}
-          onSkipForward={() => skip(15)}
-          onPreviousChapter={previousChapter}
-          onNextChapter={nextChapter}
-          onRateChange={setPlaybackRate}
-          onSeek={seekToTime}
-          onDropNote={startDictation}
-          onSwitchToLibrary={() => setActiveTab('library')}
-          onRewriteWithGemini={handleRewriteWithGemini}
-          isRewriting={isRewriting}
-        />
+    <>
+      {isLoading && (
+        <LoadingScreen onLoaded={() => setIsLoading(false)} minDurationMs={1800} />
       )}
 
-      {activeTab === 'library' && (
-        <LibraryIngestion
-          documents={documents}
-          activeDocumentId={activeDocId}
-          isPlaying={playerState.isPlaying && !playerState.isPaused}
-          onSelectDocument={(doc) => {
-            setActiveDocId(doc.id);
-            setActiveTab('audio');
-          }}
-          onPlayToggle={handlePlayToggleFromLibrary}
-          onDocumentAdded={(doc) => {
-            setActiveDocId(doc.id);
-          }}
-          onDeleteDocument={handleDeleteDocument}
+      <MobileContainer>
+        {/* Top HUD Header */}
+        <TopHeader
+          title={activeDocument ? activeDocument.title : "The Student's Companion"}
+          subtitle={
+            activeDocument && currentSegment
+              ? `Ch ${playerState.currentSegmentIndex + 1}: ${currentSegment.title}`
+              : undefined
+          }
+          hasApiKey={!!settings.geminiApiKey}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
-      )}
 
-      {activeTab === 'notebook' && (
-        <CommuteNotebook
-          notes={notes}
-          activeDocument={activeDocument}
-          currentLectureTimeSec={playerState.currentTime}
-          isRecording={isRecording}
-          isProcessing={isProcessing}
-          transcript={transcript}
-          audioLevel={audioLevel}
-          capturedTimestamp={capturedTimestamp}
-          onStartDictation={startDictation}
-          onFinalizeDictation={finalizeDictation}
-          onCancelDictation={cancelDictation}
-          onJumpToAudio={handleJumpToAudio}
-          onDeleteNote={handleDeleteNote}
+        {/* Screen Views */}
+        {activeTab === 'audio' && (
+          <CommuteAudioHub
+            document={activeDocument}
+            currentSegment={currentSegment}
+            playerState={playerState}
+            onTogglePlayPause={togglePlayPause}
+            onSkipBackward={() => skip(-15)}
+            onSkipForward={() => skip(15)}
+            onPreviousChapter={previousChapter}
+            onNextChapter={nextChapter}
+            onRateChange={setPlaybackRate}
+            onSeek={seekToTime}
+            onDropNote={startDictation}
+            onSwitchToLibrary={() => setActiveTab('library')}
+            onRewriteWithGemini={handleRewriteWithGemini}
+            isRewriting={isRewriting}
+          />
+        )}
+
+        {activeTab === 'library' && (
+          <LibraryIngestion
+            documents={documents}
+            activeDocumentId={activeDocId}
+            isPlaying={playerState.isPlaying && !playerState.isPaused}
+            onSelectDocument={(doc) => {
+              setActiveDocId(doc.id);
+              setActiveTab('audio');
+            }}
+            onPlayToggle={handlePlayToggleFromLibrary}
+            onDocumentAdded={(doc) => {
+              setActiveDocId(doc.id);
+            }}
+            onDeleteDocument={handleDeleteDocument}
+          />
+        )}
+
+        {activeTab === 'notebook' && (
+          <CommuteNotebook
+            notes={notes}
+            activeDocument={activeDocument}
+            currentLectureTimeSec={playerState.currentTime}
+            isRecording={isRecording}
+            isProcessing={isProcessing}
+            transcript={transcript}
+            audioLevel={audioLevel}
+            capturedTimestamp={capturedTimestamp}
+            onStartDictation={startDictation}
+            onFinalizeDictation={finalizeDictation}
+            onCancelDictation={cancelDictation}
+            onJumpToAudio={handleJumpToAudio}
+            onDeleteNote={handleDeleteNote}
+          />
+        )}
+
+        {activeTab === 'export' && (
+          <ExportReview
+            documents={documents}
+            activeDocument={activeDocument}
+            notes={notes}
+            onSelectDocument={(doc) => setActiveDocId(doc.id)}
+          />
+        )}
+
+        {/* Tactile Commute 4-Tab Bottom Navigation Bar (No Badges) */}
+        <BottomNav
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
         />
-      )}
 
-      {activeTab === 'export' && (
-        <ExportReview
-          documents={documents}
-          activeDocument={activeDocument}
-          notes={notes}
-          onSelectDocument={(doc) => setActiveDocId(doc.id)}
+        {/* Settings & API Key Modal */}
+        <ApiKeyModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          settings={settings}
+          onSaveSettings={setSettings}
         />
-      )}
-
-      {/* Tactile Commute 4-Tab Bottom Navigation Bar */}
-      <BottomNav
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        noteCount={notes.length}
-        isPlaying={playerState.isPlaying && !playerState.isPaused}
-      />
-
-      {/* Settings & API Key Modal */}
-      <ApiKeyModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        settings={settings}
-        onSaveSettings={setSettings}
-      />
-    </MobileContainer>
+      </MobileContainer>
+    </>
   );
 }
 
