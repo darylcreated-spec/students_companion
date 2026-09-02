@@ -81,7 +81,7 @@ export const CommuteNotebook: React.FC<CommuteNotebookProps> = ({
   return (
     <div className="flex-1 flex flex-col p-4 space-y-3.5 overflow-y-auto overscroll-contain relative pb-28">
       {/* Top Header Card */}
-      <div className="p-3.5 rounded-2xl bg-[#0E1426]/80 border border-white/5 flex items-center justify-between">
+      <div className="p-3.5 rounded-2xl bg-[#0E1426]/80 border border-white/5 flex items-center justify-between shrink-0">
         <div>
           <h2 className="text-sm font-bold text-slate-100 tracking-tight flex items-center gap-1.5">
             <BookmarkCheck className="w-4 h-4 text-amber-400" />
@@ -104,7 +104,7 @@ export const CommuteNotebook: React.FC<CommuteNotebookProps> = ({
 
       {/* Manual Note Input Dropdown with Action Icons */}
       {isManualInputOpen && (
-        <div className="p-3 rounded-2xl bg-slate-900/95 border border-cyan-400/40 shadow-xl flex flex-col space-y-2 animate-in slide-in-from-top-2">
+        <div className="p-3 rounded-2xl bg-slate-900/95 border border-cyan-400/40 shadow-xl flex flex-col space-y-2 animate-in slide-in-from-top-2 shrink-0">
           <textarea
             rows={2}
             placeholder="Type quick thought or question..."
@@ -132,11 +132,13 @@ export const CommuteNotebook: React.FC<CommuteNotebookProps> = ({
       )}
 
       {/* Category Filter Chips with Icons */}
-      <CategoryFilters
-        selected={selectedFilter}
-        onSelect={setSelectedFilter}
-        counts={counts}
-      />
+      <div className="shrink-0">
+        <CategoryFilters
+          selected={selectedFilter}
+          onSelect={setSelectedFilter}
+          counts={counts}
+        />
+      </div>
 
       {/* Note Stream */}
       {filteredNotes.length === 0 ? (
