@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { LectureDocument, LectureSegment, PlaybackRate, AudioPlayerState } from '../types';
-import { WaveformVisualizer } from '../components/audio/WaveformVisualizer';
+import { LiveReadingWindow } from '../components/audio/LiveReadingWindow';
 import { PlayerControls } from '../components/audio/PlayerControls';
 import { ChapterScrubber } from '../components/audio/ChapterScrubber';
 import { Radio, BookOpen, Volume2, ShieldAlert, Headphones, Library } from 'lucide-react';
-import { GeminiService } from '../services/ai/geminiService';
 
 interface CommuteAudioHubProps {
   document: LectureDocument | null;
@@ -39,8 +38,6 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
   onRewriteWithGemini,
   isRewriting = false,
 }) => {
-  const [showTranscript, setShowTranscript] = useState(false);
-
   if (!document) {
     return (
       <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-4">
@@ -68,10 +65,16 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
   const totalChapters = document.segments.length;
   const currentChapterNum = playerState.currentSegmentIndex + 1;
 
+  // Active reading content
+  const activeReadingText =
+    currentSegment?.synthesizedAudioText ||
+    currentSegment?.originalContent ||
+    'Preparing reading text...';
+
   return (
-    <div className="flex-1 flex flex-col space-y-4 p-4 pb-6 overflow-y-auto overscroll-contain">
+    <div className="flex-1 flex flex-col space-y-3.5 p-4 pb-6 overflow-y-auto overscroll-contain">
       {/* Top Glass Card: Lecture & Chapter Metadata */}
-      <div className="p-4 rounded-3xl bg-[#0E1426]/80 border border-white/10 shadow-lg backdrop-blur-xl flex flex-col space-y-2 relative shrink-0">
+      <div className="p-3.5 rounded-3xl bg-[#0E1426]/80 border border-white/10 shadow-lg backdrop-blur-xl flex flex-col space-y-2 relative shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-mono text-cyan-400 font-semibold uppercase tracking-wider">
             Current Lecture
@@ -94,29 +97,23 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
             {currentSegment?.title || `Chapter ${currentChapterNum}`}
           </p>
         </div>
-
-        {/* Quick bullet points pill */}
-        {currentSegment?.keyPoints && currentSegment.keyPoints.length > 0 && (
-          <div className="pt-2 border-t border-white/5 flex items-start space-x-1.5 text-[11px] text-slate-300">
-            <span className="text-cyan-400 font-bold">•</span>
-            <span className="line-clamp-1">{currentSegment.keyPoints[0]}</span>
-          </div>
-        )}
       </div>
 
-      {/* Central Visualizer & Scrubber Deck */}
-      <div className="py-2 flex flex-col items-center space-y-3 shrink-0">
-        {/* Dynamic Electric Cyan Audio Waveform Progress Bar */}
-        <WaveformVisualizer
-          isPlaying={playerState.isPlaying && !playerState.isPaused}
+      {/* Live Content Reading Window (Replaced Audio Wave Graphics) */}
+      <div className="w-full shrink-0">
+        <LiveReadingWindow
+          title={currentSegment?.title || document.title}
+          content={activeReadingText}
+          isPlaying={playerState.isPlaying}
+          isPaused={playerState.isPaused}
           progress={progress}
-          audioLevel={playerState.isPlaying && !playerState.isPaused ? 0.6 : 0.05}
-          activeColor="#22D3EE"
-          inactiveColor="rgba(255, 255, 255, 0.15)"
-          height={65}
+          currentTime={playerState.currentTime}
+          duration={playerState.duration}
         />
+      </div>
 
-        {/* Chapter Scrubber Bar */}
+      {/* Chapter Scrubber Bar */}
+      <div className="py-1 shrink-0">
         <ChapterScrubber
           currentTime={playerState.currentTime}
           duration={playerState.duration}
@@ -128,7 +125,7 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
       </div>
 
       {/* Massive Tactile Commute Player Controls & Single-Tap Drop Note */}
-      <div className="pt-1">
+      <div className="pt-0.5">
         <PlayerControls
           isPlaying={playerState.isPlaying}
           isPaused={playerState.isPaused}
