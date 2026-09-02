@@ -19,11 +19,21 @@ export class MediaSessionService {
 
     navigator.mediaSession.metadata = new MediaMetadata({
       title: config.title,
-      artist: config.artist || "The Student's Companion",
+      artist: config.artist || "Student's Companion",
       album: config.album || 'Commute Audio Journey',
       artwork: [
         {
-          src: config.artwork || '/favicon.svg',
+          src: '/icon-512.png',
+          sizes: '512x512',
+          type: 'image/png'
+        },
+        {
+          src: '/icon-192.png',
+          sizes: '192x192',
+          type: 'image/png'
+        },
+        {
+          src: '/favicon.svg',
           sizes: '512x512',
           type: 'image/svg+xml'
         }

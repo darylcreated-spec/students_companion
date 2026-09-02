@@ -60,7 +60,7 @@ export function useAudioPlayer(activeDocument: LectureDocument | null) {
 
     MediaSessionService.updateMetadata({
       title: currentSeg.title,
-      artist: 'The Student’s Companion (Commute Audio)',
+      artist: "Student's Companion",
       album: activeDocument.title,
       onPlay: () => resume(),
       onPause: () => pause(),
