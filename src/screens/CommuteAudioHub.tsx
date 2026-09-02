@@ -3,7 +3,7 @@ import { LectureDocument, LectureSegment, PlaybackRate, AudioPlayerState } from 
 import { WaveformVisualizer } from '../components/audio/WaveformVisualizer';
 import { PlayerControls } from '../components/audio/PlayerControls';
 import { ChapterScrubber } from '../components/audio/ChapterScrubber';
-import { Sparkles, BookOpen, Volume2, ShieldAlert, Headphones } from 'lucide-react';
+import { Radio, BookOpen, Volume2, ShieldAlert, Headphones, Library } from 'lucide-react';
 import { GeminiService } from '../services/ai/geminiService';
 
 interface CommuteAudioHubProps {
@@ -55,9 +55,10 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
         </p>
         <button
           onClick={onSwitchToLibrary}
-          className="px-6 py-3 rounded-2xl bg-cyan-400 text-obsidian-950 font-bold text-xs tracking-wide shadow-[0_0_20px_rgba(34,211,238,0.5)] hover:brightness-110 active:scale-95 transition-all"
+          className="px-6 py-3 rounded-2xl bg-cyan-400 text-obsidian-950 font-bold text-xs tracking-wide shadow-[0_0_20px_rgba(34,211,238,0.5)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center"
         >
-          Open Lecture Library
+          <Library className="w-4 h-4 mr-1.5" />
+          <span>Open Lecture Library</span>
         </button>
       </div>
     );
@@ -80,8 +81,8 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
             disabled={isRewriting}
             className="flex items-center space-x-1 px-3 py-1 rounded-xl bg-slate-900 border border-cyan-400/30 text-[11px] font-mono text-cyan-300 hover:border-cyan-400 transition-colors"
           >
-            <Sparkles className={`w-3 h-3 text-cyan-400 ${isRewriting ? 'animate-spin' : ''}`} />
-            <span>{isRewriting ? 'Rewriting...' : 'Gemini Radio Polish'}</span>
+            <Radio className={`w-3.5 h-3.5 text-cyan-400 ${isRewriting ? 'animate-pulse text-amber-400' : ''}`} />
+            <span>{isRewriting ? 'Rewriting Audio...' : 'Gemini Radio Polish'}</span>
           </button>
         </div>
 

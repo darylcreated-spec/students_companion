@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LectureDocument, CommuteNote } from '../types';
 import { StudyGuidePreview } from '../components/export/StudyGuidePreview';
 import { ExportFormatCards } from '../components/export/ExportFormatCards';
-import { FileDown, Sparkles, CheckCircle2, Sliders, BookOpen } from 'lucide-react';
+import { FileDown, CheckCircle2, BookOpen, Download, Eye } from 'lucide-react';
 
 interface ExportReviewProps {
   documents: LectureDocument[];
@@ -21,7 +21,6 @@ export const ExportReview: React.FC<ExportReviewProps> = ({
 
   const docNotes = notes.filter(n => activeDocument ? n.documentId === activeDocument.id : true);
   const examNotesCount = docNotes.filter(n => n.category === 'exam').length;
-  const actionNotesCount = docNotes.filter(n => n.category === 'action').length;
 
   return (
     <div className="flex-1 flex flex-col p-4 space-y-4 overflow-y-auto overscroll-contain pb-16">
@@ -56,27 +55,29 @@ export const ExportReview: React.FC<ExportReviewProps> = ({
         )}
       </div>
 
-      {/* Tabs: Export Downloads vs Live Preview */}
+      {/* Tabs: Export Downloads vs Live Preview (With Input Icons) */}
       <div className="flex items-center p-1 rounded-2xl bg-slate-900/90 border border-white/5">
         <button
           onClick={() => setActiveTab('formats')}
-          className={`flex-1 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
+          className={`flex-1 py-2 rounded-xl text-xs font-mono font-bold flex items-center justify-center space-x-1.5 transition-all ${
             activeTab === 'formats'
               ? 'bg-cyan-400 text-obsidian-950 shadow-[0_0_12px_rgba(34,211,238,0.5)]'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Export Packages
+          <Download className="w-3.5 h-3.5" />
+          <span>Export Packages</span>
         </button>
         <button
           onClick={() => setActiveTab('preview')}
-          className={`flex-1 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
+          className={`flex-1 py-2 rounded-xl text-xs font-mono font-bold flex items-center justify-center space-x-1.5 transition-all ${
             activeTab === 'preview'
               ? 'bg-cyan-400 text-obsidian-950 shadow-[0_0_12px_rgba(34,211,238,0.5)]'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Live Preview
+          <Eye className="w-3.5 h-3.5" />
+          <span>Live Preview</span>
         </button>
       </div>
 
@@ -91,7 +92,8 @@ export const ExportReview: React.FC<ExportReviewProps> = ({
           {/* Study Guide Summary Box */}
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
             <h4 className="text-xs font-mono text-slate-300 font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Study Guide Includes
+              <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Study Guide Includes</span>
             </h4>
             <div className="space-y-1 text-[11px] text-slate-400 font-mono">
               <div className="flex items-center space-x-2">

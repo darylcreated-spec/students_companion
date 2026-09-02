@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Volume2, Sparkles, Mail, Headphones } from 'lucide-react';
+import { Volume2, Mail, Headphones, Radio } from 'lucide-react';
 
 interface LoadingScreenProps {
   onLoaded?: () => void;

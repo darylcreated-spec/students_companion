@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { CommuteNote, LectureDocument, NoteCategory } from '../types';
+import { CommuteNote, LectureDocument } from '../types';
 import { CategoryFilters, FilterCategory } from '../components/notebook/CategoryFilters';
 import { NoteItem } from '../components/notebook/NoteItem';
 import { FloatingMicButton } from '../components/notebook/FloatingMicButton';
-import { BookmarkCheck, Plus, Sparkles, Mic, Volume2 } from 'lucide-react';
+import { BookmarkCheck, Edit3, Save, X, Mic } from 'lucide-react';
 import { db } from '../db/database';
 
 interface CommuteNotebookProps {
@@ -92,16 +92,17 @@ export const CommuteNotebook: React.FC<CommuteNotebookProps> = ({
           </p>
         </div>
 
+        {/* Input Icon on Type Note Button */}
         <button
           onClick={() => setIsManualInputOpen(!isManualInputOpen)}
-          className="px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-300 hover:text-cyan-300 hover:border-cyan-400/40 flex items-center space-x-1 transition-colors"
+          className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-300 hover:text-cyan-300 hover:border-cyan-400/40 flex items-center space-x-1.5 transition-colors"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Edit3 className="w-3.5 h-3.5" />
           <span>Type Note</span>
         </button>
       </div>
 
-      {/* Manual Note Input Dropdown */}
+      {/* Manual Note Input Dropdown with Action Icons */}
       {isManualInputOpen && (
         <div className="p-3 rounded-2xl bg-slate-900/95 border border-cyan-400/40 shadow-xl flex flex-col space-y-2 animate-in slide-in-from-top-2">
           <textarea
@@ -114,21 +115,23 @@ export const CommuteNotebook: React.FC<CommuteNotebookProps> = ({
           <div className="flex justify-end space-x-2">
             <button
               onClick={() => setIsManualInputOpen(false)}
-              className="px-3 py-1 rounded-lg bg-slate-800 text-xs text-slate-400"
+              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 flex items-center space-x-1 transition-colors"
             >
-              Cancel
+              <X className="w-3 h-3" />
+              <span>Cancel</span>
             </button>
             <button
               onClick={handleAddManualNote}
-              className="px-4 py-1 rounded-lg bg-cyan-400 text-obsidian-950 text-xs font-bold font-mono"
+              className="px-4 py-1.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-obsidian-950 text-xs font-bold font-mono flex items-center space-x-1 transition-colors"
             >
-              Save Note
+              <Save className="w-3.5 h-3.5" />
+              <span>Save Note</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Category Filter Chips */}
+      {/* Category Filter Chips with Icons */}
       <CategoryFilters
         selected={selectedFilter}
         onSelect={setSelectedFilter}

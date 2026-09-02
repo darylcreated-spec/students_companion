@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, Check, X, Loader2, Sparkles } from 'lucide-react';
+import { Mic, Check, X, Loader2, Cpu } from 'lucide-react';
 import { WaveformVisualizer } from '../audio/WaveformVisualizer';
 
 interface FloatingMicButtonProps {
@@ -83,7 +83,7 @@ export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({
 
               {isProcessing && (
                 <div className="flex items-center space-x-1.5 text-[11px] font-mono text-cyan-400 pt-2 border-t border-white/5 mt-2">
-                  <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                  <Cpu className="w-3.5 h-3.5 animate-pulse text-amber-400" />
                   <span>Categorizing into Study Notes via Gemini...</span>
                 </div>
               )}

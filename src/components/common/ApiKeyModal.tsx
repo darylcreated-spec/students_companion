@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Key, Sparkles, Volume2, ShieldCheck, Check, Info } from 'lucide-react';
+import { X, Key, Cpu, Volume2, Check, Save } from 'lucide-react';
 import { AppSettings } from '../../types';
 
 interface ApiKeyModalProps {
@@ -46,8 +46,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
           <div className="flex items-center space-x-2 text-cyan-400">
-            <Sparkles className="w-5 h-5" />
-            <h3 className="text-base font-bold text-slate-100">AI & Audio Settings</h3>
+            <Cpu className="w-5 h-5 text-cyan-400" />
+            <h3 className="text-base font-bold text-slate-100">AI & Audio Engine</h3>
           </div>
           <button
             onClick={onClose}
@@ -60,8 +60,9 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
         {/* Gemini Key Input */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-mono text-cyan-300 font-bold flex items-center gap-1">
-              <Key className="w-3 h-3" /> GEMINI API KEY
+            <label className="text-[11px] font-mono text-cyan-300 font-bold flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5" />
+              <span>GEMINI API KEY</span>
             </label>
             <span className="text-[9px] font-mono text-slate-400">Optional</span>
           </div>
@@ -80,8 +81,9 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
         {/* Google Cloud TTS Key */}
         <div className="space-y-1.5 pt-2 border-t border-white/5">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-mono text-amber-300 font-bold flex items-center gap-1">
-              <Volume2 className="w-3 h-3" /> GOOGLE CLOUD TTS KEY
+            <label className="text-[11px] font-mono text-amber-300 font-bold flex items-center gap-1.5">
+              <Volume2 className="w-3.5 h-3.5" />
+              <span>GOOGLE CLOUD TTS KEY</span>
             </label>
             <span className="text-[9px] font-mono text-slate-400">Optional</span>
           </div>
@@ -118,7 +120,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
         {/* Save Button */}
         <button
           onClick={handleSave}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 text-obsidian-950 font-bold text-xs flex items-center justify-center space-x-1.5 shadow-[0_0_15px_rgba(34,211,238,0.4)] hover:brightness-110 active:scale-98 transition-all"
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 text-obsidian-950 font-bold text-xs flex items-center justify-center space-x-2 shadow-[0_0_15px_rgba(34,211,238,0.4)] hover:brightness-110 active:scale-98 transition-all"
         >
           {saved ? (
             <>
@@ -126,7 +128,10 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
               <span>Settings Saved!</span>
             </>
           ) : (
-            <span>Save Configuration</span>
+            <>
+              <Save className="w-4 h-4" />
+              <span>Save Configuration</span>
+            </>
           )}
         </button>
       </div>
