@@ -54,6 +54,7 @@ export function App() {
     previousChapter,
     seekToTime,
     playSegment,
+    playFromSentence,
   } = useAudioPlayer(activeDocument);
 
   // Voice Dictation Hook
@@ -186,6 +187,8 @@ export function App() {
             onDropNote={startDictation}
             onSwitchToLibrary={() => setActiveTab('library')}
             onRewriteWithGemini={handleRewriteWithGemini}
+            onSelectChapter={(idx) => playSegment(idx, 0)}
+            onSentenceClick={playFromSentence}
             isRewriting={isRewriting}
           />
         )}

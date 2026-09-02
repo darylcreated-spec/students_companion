@@ -1,35 +1,57 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { LectureDocument, LectureSegment, PlaybackRate, AudioPlayerState } from '../types';
 import { TTSEngine } from '../services/audio/ttsEngine';
 import { MediaSessionService } from '../services/audio/mediaSession';
-import { GeminiService } from '../services/ai/geminiService';
+
+const DEFAULT_PLAYER_STATE: AudioPlayerState = {
+  currentDocumentId: null,
+  currentSegmentId: null,
+  currentSegmentIndex: 0,
+  isPlaying: false,
+  isPaused: false,
+  currentTime: 0,
+  duration: 240, // 4 mins default
+  playbackRate: 1.0,
+  isBuffering: false,
+  isSynthesizingSpeech: false,
+  ttsEngineType: 'browser'
+};
 
 export function useAudioPlayer(activeDocument: LectureDocument | null) {
-  const [playerState, setPlayerState] = useState<AudioPlayerState>({
-    currentDocumentId: activeDocument?.id || null,
-    currentSegmentId: activeDocument?.segments[0]?.id || null,
-    currentSegmentIndex: 0,
-    isPlaying: false,
-    isPaused: false,
-    currentTime: 0,
-    duration: activeDocument?.segments[0]?.estimatedSeconds || 240,
-    playbackRate: 1.0,
-    isBuffering: false,
-    isSynthesizingSpeech: false,
-    ttsEngineType: 'browser'
-  });
-
+  const [playerState, setPlayerState] = useState<AudioPlayerState>(DEFAULT_PLAYER_STATE);
   const timerRef = useRef<any>(null);
   const activeDocRef = useRef<LectureDocument | null>(activeDocument);
-  activeDocRef.current = activeDocument;
-
   const currentSegmentIndexRef = useRef(0);
-  currentSegmentIndexRef.current = playerState.currentSegmentIndex;
-
   const playbackRateRef = useRef<PlaybackRate>(1.0);
-  playbackRateRef.current = playerState.playbackRate;
+  const currentTimeRef = useRef(0);
 
-  // Clear progress timer
+  // Sync refs with latest state
+  useEffect(() => {
+    activeDocRef.current = activeDocument;
+  }, [activeDocument]);
+
+  useEffect(() => {
+    currentSegmentIndexRef.current = playerState.currentSegmentIndex;
+    playbackRateRef.current = playerState.playbackRate;
+    currentTimeRef.current = playerState.currentTime;
+  }, [playerState.currentSegmentIndex, playerState.playbackRate, playerState.currentTime]);
+
+  // Start progress timer during playback
+  const startTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    timerRef.current = setInterval(() => {
+      setPlayerState(prev => {
+        if (!prev.isPlaying || prev.isPaused) return prev;
+        const newTime = prev.currentTime + 1;
+        if (newTime >= prev.duration) {
+          return { ...prev, currentTime: prev.duration };
+        }
+        return { ...prev, currentTime: newTime };
+      });
+    }, 1000 / playbackRateRef.current);
+  }, []);
+
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -37,37 +59,23 @@ export function useAudioPlayer(activeDocument: LectureDocument | null) {
     }
   }, []);
 
-  // Start progress timer
-  const startTimer = useCallback(() => {
-    stopTimer();
-    timerRef.current = setInterval(() => {
-      setPlayerState(prev => {
-        if (!prev.isPlaying || prev.isPaused) return prev;
-        const nextTime = prev.currentTime + 1 * prev.playbackRate;
-        if (nextTime >= prev.duration) {
-          return prev; // Will trigger onEnd from TTS
-        }
-        return { ...prev, currentTime: nextTime };
-      });
-    }, 1000);
-  }, [stopTimer]);
-
-  // Update MediaSession on change
+  // Update Media Session controls
   useEffect(() => {
     if (!activeDocument) return;
-    const currentSeg = activeDocument.segments[playerState.currentSegmentIndex];
-    if (!currentSeg) return;
+
+    const segment = activeDocument.segments[playerState.currentSegmentIndex];
+    if (!segment) return;
 
     MediaSessionService.updateMetadata({
-      title: currentSeg.title,
-      artist: "Student's Companion",
+      title: segment.title,
       album: activeDocument.title,
+      artist: "Student's Companion",
       onPlay: () => resume(),
       onPause: () => pause(),
       onSeekBackward: () => skip(-15),
       onSeekForward: () => skip(15),
       onPreviousTrack: () => previousChapter(),
-      onNextTrack: () => nextChapter()
+      onNextTrack: () => nextChapter(),
     });
   }, [activeDocument, playerState.currentSegmentIndex]);
 
@@ -137,6 +145,66 @@ export function useAudioPlayer(activeDocument: LectureDocument | null) {
     );
   }, [startTimer, stopTimer]);
 
+  // Play from a specific sentence within current chapter
+  const playFromSentence = useCallback((sentenceIndex: number, totalSentences: number) => {
+    const doc = activeDocRef.current;
+    const segIdx = currentSegmentIndexRef.current;
+    if (!doc || !doc.segments[segIdx]) return;
+
+    const segment = doc.segments[segIdx];
+    const fullText = segment.synthesizedAudioText || segment.originalContent;
+    const sentences = fullText.split(/(?<=[.?!])\s+/).map(s => s.trim()).filter(Boolean);
+    const remainingText = sentences.slice(sentenceIndex).join(' ');
+
+    const estimatedOffset = Math.round((sentenceIndex / (totalSentences || 1)) * segment.estimatedSeconds);
+
+    stopTimer();
+    setPlayerState(prev => ({
+      ...prev,
+      currentTime: estimatedOffset,
+      isPlaying: true,
+      isPaused: false
+    }));
+
+    MediaSessionService.setPlaybackState('playing');
+
+    TTSEngine.speak(
+      remainingText,
+      playbackRateRef.current,
+      {
+        onStart: () => {
+          startTimer();
+          setPlayerState(prev => ({ ...prev, isPlaying: true, isPaused: false }));
+        },
+        onEnd: () => {
+          stopTimer();
+          MediaSessionService.setPlaybackState('paused');
+          const nextIdx = currentSegmentIndexRef.current + 1;
+          if (doc.segments[nextIdx]) {
+            playSegment(nextIdx, 0);
+          } else {
+            setPlayerState(prev => ({ ...prev, isPlaying: false, isPaused: false, currentTime: prev.duration }));
+          }
+        },
+        onPause: () => {
+          stopTimer();
+          setPlayerState(prev => ({ ...prev, isPaused: true }));
+          MediaSessionService.setPlaybackState('paused');
+        },
+        onResume: () => {
+          startTimer();
+          setPlayerState(prev => ({ ...prev, isPaused: false, isPlaying: true }));
+          MediaSessionService.setPlaybackState('playing');
+        },
+        onError: (err) => {
+          console.warn('TTS Playback error:', err);
+          stopTimer();
+          setPlayerState(prev => ({ ...prev, isPlaying: false, isPaused: false }));
+        }
+      }
+    );
+  }, [startTimer, stopTimer, playSegment]);
+
   const togglePlayPause = useCallback(() => {
     if (playerState.isPlaying && !playerState.isPaused) {
       pause();
@@ -187,7 +255,6 @@ export function useAudioPlayer(activeDocument: LectureDocument | null) {
     if (prevIdx >= 0) {
       playSegment(prevIdx, 0);
     } else {
-      // Restart current chapter
       playSegment(0, 0);
     }
   }, [playerState.currentSegmentIndex, playSegment]);
@@ -215,6 +282,7 @@ export function useAudioPlayer(activeDocument: LectureDocument | null) {
     nextChapter,
     previousChapter,
     seekToTime,
-    playSegment
+    playSegment,
+    playFromSentence,
   };
 }

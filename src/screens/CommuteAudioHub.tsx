@@ -3,7 +3,8 @@ import { LectureDocument, LectureSegment, PlaybackRate, AudioPlayerState } from 
 import { LiveReadingWindow } from '../components/audio/LiveReadingWindow';
 import { PlayerControls } from '../components/audio/PlayerControls';
 import { ChapterScrubber } from '../components/audio/ChapterScrubber';
-import { Radio, BookOpen, Volume2, ShieldAlert, Headphones, Library } from 'lucide-react';
+import { ChapterPickerModal } from '../components/audio/ChapterPickerModal';
+import { Radio, BookOpen, Volume2, ShieldAlert, Headphones, Library, ListOrdered } from 'lucide-react';
 
 interface CommuteAudioHubProps {
   document: LectureDocument | null;
@@ -19,6 +20,8 @@ interface CommuteAudioHubProps {
   onDropNote: () => void;
   onSwitchToLibrary: () => void;
   onRewriteWithGemini: (segmentIndex: number) => void;
+  onSelectChapter: (chapterIndex: number) => void;
+  onSentenceClick: (sentenceIndex: number, totalSentences: number) => void;
   isRewriting?: boolean;
 }
 
@@ -36,8 +39,12 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
   onDropNote,
   onSwitchToLibrary,
   onRewriteWithGemini,
+  onSelectChapter,
+  onSentenceClick,
   isRewriting = false,
 }) => {
+  const [isChapterPickerOpen, setIsChapterPickerOpen] = useState(false);
+
   if (!document) {
     return (
       <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-4">
@@ -73,12 +80,18 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
 
   return (
     <div className="flex-1 flex flex-col space-y-3.5 p-4 pb-6 overflow-y-auto overscroll-contain">
-      {/* Top Glass Card: Lecture & Chapter Metadata */}
+      {/* Top Glass Card: Lecture & Chapter Metadata + Start Point Selector */}
       <div className="p-3.5 rounded-3xl bg-[#0E1426]/80 border border-white/10 shadow-lg backdrop-blur-xl flex flex-col space-y-2 relative shrink-0">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-mono text-cyan-400 font-semibold uppercase tracking-wider">
-            Current Lecture
-          </span>
+          {/* Chapter / Start Point Picker Button */}
+          <button
+            onClick={() => setIsChapterPickerOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-cyan-400/30 hover:border-cyan-400 text-[11px] font-mono text-cyan-300 transition-colors"
+          >
+            <ListOrdered className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Start Point: Ch {currentChapterNum}/{totalChapters}</span>
+          </button>
+
           <button
             onClick={() => onRewriteWithGemini(playerState.currentSegmentIndex)}
             disabled={isRewriting}
@@ -99,7 +112,7 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
         </div>
       </div>
 
-      {/* Live Content Reading Window (Replaced Audio Wave Graphics) */}
+      {/* Live Content Reading Window (With Tap-To-Read From Any Sentence) */}
       <div className="w-full shrink-0">
         <LiveReadingWindow
           title={currentSegment?.title || document.title}
@@ -109,6 +122,8 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
           progress={progress}
           currentTime={playerState.currentTime}
           duration={playerState.duration}
+          onSentenceClick={onSentenceClick}
+          onOpenChapterPicker={() => setIsChapterPickerOpen(true)}
         />
       </div>
 
@@ -139,6 +154,15 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
           onDropNote={onDropNote}
         />
       </div>
+
+      {/* Chapter & Start Point Selection Modal */}
+      <ChapterPickerModal
+        isOpen={isChapterPickerOpen}
+        onClose={() => setIsChapterPickerOpen(false)}
+        document={document}
+        currentChapterIndex={playerState.currentSegmentIndex}
+        onSelectChapter={onSelectChapter}
+      />
     </div>
   );
 };
