@@ -61,6 +61,8 @@ export interface AudioPlayerState {
 export interface AppSettings {
   geminiApiKey: string;
   googleCloudTtsKey?: string;
+  selectedVoiceURI?: string;
+  cloudVoiceName?: string;
   autoResumeAfterNote: boolean;
   speechPitch: number;
   speechRate: number;
