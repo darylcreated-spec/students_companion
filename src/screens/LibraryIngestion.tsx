@@ -30,7 +30,7 @@ export const LibraryIngestion: React.FC<LibraryIngestionProps> = ({
   const totalDurationMin = documents.reduce((acc, d) => acc + d.durationMinutes, 0);
 
   return (
-    <div className="flex-1 flex flex-col p-4 space-y-4 overflow-y-auto">
+    <div className="flex-1 flex flex-col p-4 pb-12 space-y-4 overflow-y-auto overscroll-contain">
       {/* Top Storage & Offline Status Pill */}
       <div className="p-3.5 rounded-2xl bg-[#0E1426]/70 border border-white/5 flex items-center justify-between">
         <div className="flex items-center space-x-2">

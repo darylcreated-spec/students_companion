@@ -68,9 +68,9 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
   const currentChapterNum = playerState.currentSegmentIndex + 1;
 
   return (
-    <div className="flex-1 flex flex-col justify-between p-4 pb-2 overflow-y-auto">
+    <div className="flex-1 flex flex-col space-y-4 p-4 pb-6 overflow-y-auto overscroll-contain">
       {/* Top Glass Card: Lecture & Chapter Metadata */}
-      <div className="p-4 rounded-3xl bg-[#0E1426]/80 border border-white/10 shadow-lg backdrop-blur-xl flex flex-col space-y-2 relative">
+      <div className="p-4 rounded-3xl bg-[#0E1426]/80 border border-white/10 shadow-lg backdrop-blur-xl flex flex-col space-y-2 relative shrink-0">
         <div className="flex items-center justify-between">
           <span className="px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-[10px] font-mono font-bold text-cyan-300">
             NOW PLAYING
@@ -104,7 +104,7 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
       </div>
 
       {/* Central Visualizer & Scrubber Deck */}
-      <div className="my-auto py-2 flex flex-col items-center space-y-3">
+      <div className="py-2 flex flex-col items-center space-y-3 shrink-0">
         {/* Dynamic Electric Cyan Audio Waveform Progress Bar */}
         <WaveformVisualizer
           isPlaying={playerState.isPlaying && !playerState.isPaused}

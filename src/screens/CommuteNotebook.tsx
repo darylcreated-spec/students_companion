@@ -79,7 +79,7 @@ export const CommuteNotebook: React.FC<CommuteNotebookProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col p-4 space-y-3.5 overflow-y-auto relative pb-24">
+    <div className="flex-1 flex flex-col p-4 space-y-3.5 overflow-y-auto overscroll-contain relative pb-28">
       {/* Top Header Card */}
       <div className="p-3.5 rounded-2xl bg-[#0E1426]/80 border border-white/5 flex items-center justify-between">
         <div>

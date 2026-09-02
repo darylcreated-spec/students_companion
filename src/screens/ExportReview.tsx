@@ -24,7 +24,7 @@ export const ExportReview: React.FC<ExportReviewProps> = ({
   const actionNotesCount = docNotes.filter(n => n.category === 'action').length;
 
   return (
-    <div className="flex-1 flex flex-col p-4 space-y-4 overflow-y-auto pb-10">
+    <div className="flex-1 flex flex-col p-4 space-y-4 overflow-y-auto overscroll-contain pb-16">
       {/* Top Header Card */}
       <div className="p-3.5 rounded-2xl bg-[#0E1426]/80 border border-white/5 flex items-center justify-between">
         <div>
