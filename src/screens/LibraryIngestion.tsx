@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { LectureDocument } from '../types';
-import { FileDropzone } from '../components/library/FileDropzone';
+import { UniversalIngestionPortal } from '../components/library/UniversalIngestionPortal';
 import { LectureCard } from '../components/library/LectureCard';
-import { GoogleDocsModal } from '../components/library/GoogleDocsModal';
-import { HardDrive, Cloud, Plus, FolderOpen } from 'lucide-react';
+import { HardDrive, FolderOpen } from 'lucide-react';
 
 interface LibraryIngestionProps {
   documents: LectureDocument[];
   activeDocumentId: string | null;
   isPlaying: boolean;
-  onSelectDocument: (doc: LectureDocument) => void;
+  onSelectDocument: (doc: LectureDocument, startChapterIndex?: number) => void;
   onPlayToggle: (doc: LectureDocument) => void;
-  onDocumentAdded: (doc: LectureDocument) => void;
+  onDocumentAdded: (doc: LectureDocument, startChapterIndex?: number) => void;
   onDeleteDocument: (id: string) => void;
 }
 
@@ -24,8 +23,6 @@ export const LibraryIngestion: React.FC<LibraryIngestionProps> = ({
   onDocumentAdded,
   onDeleteDocument,
 }) => {
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-
   const totalDurationMin = documents.reduce((acc, d) => acc + d.durationMinutes, 0);
 
   return (
@@ -43,20 +40,8 @@ export const LibraryIngestion: React.FC<LibraryIngestionProps> = ({
         </span>
       </div>
 
-      {/* File Ingestion Dropzone */}
-      <FileDropzone onDocumentAdded={onDocumentAdded} />
-
-      {/* Google Docs Integration Quick Trigger */}
-      <button
-        onClick={() => setIsGoogleModalOpen(true)}
-        className="w-full py-3 px-4 rounded-2xl bg-[#0E1426]/80 hover:bg-[#0E1426] border border-cyan-400/30 hover:border-cyan-400 text-cyan-300 flex items-center justify-between text-xs font-semibold shadow-[0_0_15px_rgba(34,211,238,0.15)] transition-all"
-      >
-        <div className="flex items-center space-x-2">
-          <Cloud className="w-4 h-4 text-cyan-400" />
-          <span>Sync Google Docs / Paste Outline</span>
-        </div>
-        <Plus className="w-4 h-4" />
-      </button>
+      {/* Single Unified Ingestion Portal: PDF, Google Docs, OneDrive, Uploads & OCR Scans */}
+      <UniversalIngestionPortal onDocumentAdded={onDocumentAdded} />
 
       {/* Cached Lecture Queue List */}
       <div className="space-y-2.5 pt-2">
@@ -70,7 +55,7 @@ export const LibraryIngestion: React.FC<LibraryIngestionProps> = ({
         {documents.length === 0 ? (
           <div className="p-6 rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-center">
             <p className="text-xs text-slate-400">
-              No lectures uploaded yet. Drop a slide deck or PDF above to start.
+              No lectures uploaded yet. Use the portal above to ingest PDF, Google Docs, OneDrive, or book photos.
             </p>
           </div>
         ) : (
@@ -95,13 +80,6 @@ export const LibraryIngestion: React.FC<LibraryIngestionProps> = ({
           </div>
         )}
       </div>
-
-      {/* Google Docs Modal */}
-      <GoogleDocsModal
-        isOpen={isGoogleModalOpen}
-        onClose={() => setIsGoogleModalOpen(false)}
-        onDocumentAdded={onDocumentAdded}
-      />
     </div>
   );
 };

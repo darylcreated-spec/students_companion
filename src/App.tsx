@@ -203,8 +203,12 @@ export function App() {
               setActiveTab('audio');
             }}
             onPlayToggle={handlePlayToggleFromLibrary}
-            onDocumentAdded={(doc) => {
+            onDocumentAdded={(doc, startChapterIndex = 0) => {
               setActiveDocId(doc.id);
+              setActiveTab('audio');
+              setTimeout(() => {
+                playSegment(startChapterIndex, 0);
+              }, 250);
             }}
             onDeleteDocument={handleDeleteDocument}
           />
