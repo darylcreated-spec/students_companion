@@ -79,10 +79,10 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
           <button
             onClick={() => onRewriteWithGemini(playerState.currentSegmentIndex)}
             disabled={isRewriting}
-            className="flex items-center space-x-1 px-3 py-1 rounded-xl bg-slate-900 border border-cyan-400/30 text-[11px] font-mono text-cyan-300 hover:border-cyan-400 transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-cyan-400/30 text-[11px] font-mono text-cyan-300 hover:border-cyan-400 transition-colors"
           >
             <Radio className={`w-3.5 h-3.5 text-cyan-400 ${isRewriting ? 'animate-pulse text-amber-400' : ''}`} />
-            <span>{isRewriting ? 'Rewriting Audio...' : 'Gemini Radio Polish'}</span>
+            <span>{isRewriting ? 'Enhancing Audio...' : 'Audio Polish'}</span>
           </button>
         </div>
 

@@ -83,8 +83,8 @@ export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({
 
               {isProcessing && (
                 <div className="flex items-center space-x-1.5 text-[11px] font-mono text-cyan-400 pt-2 border-t border-white/5 mt-2">
-                  <Cpu className="w-3.5 h-3.5 animate-pulse text-amber-400" />
-                  <span>Categorizing into Study Notes via Gemini...</span>
+                  <Cpu className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Organizing study note...</span>
                 </div>
               )}
             </div>

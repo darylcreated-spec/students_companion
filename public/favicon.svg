@@ -13,38 +13,25 @@
       <stop offset="0%" stop-color="#FDE68A"/>
       <stop offset="100%" stop-color="#FBBF24"/>
     </linearGradient>
-    <filter id="cyanGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="16" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
-    <filter id="amberGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="12" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
   </defs>
 
   <!-- Base Rounded Container -->
   <rect width="512" height="512" rx="120" fill="url(#bgGrad)" stroke="#1E293B" stroke-width="6"/>
 
-  <!-- Glowing Ambient Grid Ring -->
-  <circle cx="256" cy="256" r="190" stroke="#22D3EE" stroke-width="3" stroke-dasharray="12 12" opacity="0.25"/>
-  <circle cx="256" cy="256" r="160" stroke="#22D3EE" stroke-width="1.5" opacity="0.15"/>
-
   <!-- Headphone Audio Arch -->
-  <path d="M146 256 C146 190, 195 136, 256 136 C317 136, 366 190, 366 256" fill="none" stroke="url(#cyanGrad)" stroke-width="26" stroke-linecap="round" filter="url(#cyanGlow)"/>
+  <path d="M146 256 C146 186, 195 132, 256 132 C317 132, 366 186, 366 256" fill="none" stroke="url(#cyanGrad)" stroke-width="26" stroke-linecap="round"/>
 
   <!-- Left & Right Ear Cushions -->
-  <rect x="126" y="240" width="38" height="74" rx="18" fill="#0A0F1D" stroke="#22D3EE" stroke-width="8"/>
-  <rect x="348" y="240" width="38" height="74" rx="18" fill="#0A0F1D" stroke="#22D3EE" stroke-width="8"/>
+  <rect x="126" y="236" width="38" height="78" rx="18" fill="#0A0F1D" stroke="#22D3EE" stroke-width="8"/>
+  <rect x="348" y="236" width="38" height="78" rx="18" fill="#0A0F1D" stroke="#22D3EE" stroke-width="8"/>
 
-  <!-- Audio Waveform Center Graphic -->
-  <line x1="200" y1="230" x2="200" y2="282" stroke="url(#cyanGrad)" stroke-width="10" stroke-linecap="round"/>
-  <line x1="228" y1="205" x2="228" y2="307" stroke="url(#cyanGrad)" stroke-width="10" stroke-linecap="round"/>
+  <!-- Audio Equalizer Bars -->
+  <line x1="196" y1="230" x2="196" y2="282" stroke="url(#cyanGrad)" stroke-width="10" stroke-linecap="round"/>
+  <line x1="226" y1="205" x2="226" y2="307" stroke="url(#cyanGrad)" stroke-width="10" stroke-linecap="round"/>
   <line x1="256" y1="180" x2="256" y2="332" stroke="url(#cyanGrad)" stroke-width="12" stroke-linecap="round"/>
-  <line x1="284" y1="205" x2="284" y2="307" stroke="url(#cyanGrad)" stroke-width="10" stroke-linecap="round"/>
-  <line x1="312" y1="230" x2="312" y2="282" stroke="url(#cyanGrad)" stroke-width="10" stroke-linecap="round"/>
+  <line x1="286" y1="205" x2="286" y2="307" stroke="url(#cyanGrad)" stroke-width="10" stroke-linecap="round"/>
+  <line x1="316" y1="230" x2="316" y2="282" stroke="url(#cyanGrad)" stroke-width="10" stroke-linecap="round"/>
 
-  <!-- Glowing Commute Bookmark / Note Star (Top Right) -->
-  <circle cx="375" cy="135" r="32" fill="url(#amberGrad)" filter="url(#amberGlow)"/>
-  <path d="M366 122 L384 122 L384 148 L375 141 L366 148 Z" fill="#0A0F1D"/>
+  <!-- Bookmark Ribbon on Top Right -->
+  <path d="M362 108 L392 108 L392 152 L377 140 L362 152 Z" fill="url(#amberGrad)" stroke="#0A0F1D" stroke-width="3"/>
 </svg>
