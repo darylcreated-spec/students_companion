@@ -61,6 +61,7 @@ export interface AudioPlayerState {
 export interface AppSettings {
   geminiApiKey: string;
   googleCloudTtsKey?: string;
+  selectedLanguage: string;
   selectedVoiceURI?: string;
   cloudVoiceName?: string;
   autoResumeAfterNote: boolean;
@@ -73,6 +74,7 @@ export interface AppSettings {
 export const DEFAULT_SETTINGS: AppSettings = {
   geminiApiKey: '',
   googleCloudTtsKey: '',
+  selectedLanguage: 'en-US',
   selectedVoiceURI: '',
   cloudVoiceName: 'en-US-Journey-F',
   autoResumeAfterNote: true,

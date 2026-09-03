@@ -22,6 +22,7 @@ export const db = new CompanionDatabase();
 export const DEFAULT_SETTINGS: AppSettings = {
   geminiApiKey: localStorage.getItem('GEMINI_API_KEY') || '',
   googleCloudTtsKey: localStorage.getItem('GOOGLE_TTS_KEY') || '',
+  selectedLanguage: 'en-US',
   autoResumeAfterNote: true,
   speechPitch: 1.0,
   speechRate: 1.0,

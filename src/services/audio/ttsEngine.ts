@@ -110,6 +110,7 @@ export class TTSEngine {
     this.currentUtterance = utterance;
 
     const savedVoiceURI = customVoiceURI || localStorage.getItem('SELECTED_VOICE_URI');
+    const savedLang = localStorage.getItem('SELECTED_LANGUAGE') || 'en';
     const voices = this.synth.getVoices();
 
     let preferredVoice: SpeechSynthesisVoice | undefined;
@@ -122,7 +123,7 @@ export class TTSEngine {
       preferredVoice =
         voices.find(
           (v) =>
-            v.lang.startsWith('en') &&
+            v.lang.toLowerCase().startsWith(savedLang.toLowerCase().slice(0, 2)) &&
             (v.name.includes('Natural') ||
               v.name.includes('Google') ||
               v.name.includes('Premium') ||
@@ -132,6 +133,7 @@ export class TTSEngine {
               v.name.includes('Victoria') ||
               v.name.includes('Siri'))
         ) ||
+        voices.find((v) => v.lang.toLowerCase().startsWith(savedLang.toLowerCase().slice(0, 2))) ||
         voices.find((v) => v.lang.startsWith('en')) ||
         voices[0];
     }
@@ -141,7 +143,8 @@ export class TTSEngine {
     }
 
     utterance.rate = rate;
-    utterance.pitch = customPitch;
+    const savedPitch = parseFloat(localStorage.getItem('SPEECH_PITCH') || '1.0');
+    utterance.pitch = customPitch !== 1.0 ? customPitch : savedPitch;
 
     utterance.onstart = () => {
       this.isPlaying = true;
@@ -207,16 +210,47 @@ export class TTSEngine {
   }
 
   /**
-   * Preview a voice with sample commute text
+   * Preview a voice with native language greeting sample text
    */
-  public static previewVoice(voiceURI: string, pitch: number = 1.0) {
+  public static previewVoice(
+    voiceURI?: string,
+    pitch: number = 1.0,
+    language: string = 'en-US',
+    sampleText?: string
+  ) {
     if (!this.synth) return;
     this.synth.cancel();
 
-    const sampleText = "Hello! This is a preview of your reading voice for the student's companion commute journey.";
-    const utterance = new SpeechSynthesisUtterance(sampleText);
     const voices = this.synth.getVoices();
     const voice = voices.find((v) => v.voiceURI === voiceURI || v.name === voiceURI);
+
+    let text = sampleText;
+    if (!text) {
+      const lang = (voice?.lang || language).toLowerCase();
+      if (lang.startsWith('es')) {
+        text = '¡Hola! Esta es una prueba de voz para tus lecturas.';
+      } else if (lang.startsWith('fr')) {
+        text = 'Bonjour! Ceci est un essai vocal pour vos lectures.';
+      } else if (lang.startsWith('de')) {
+        text = 'Hallo! Dies ist eine Hörprobe für Ihre Vorlesungen.';
+      } else if (lang.startsWith('it')) {
+        text = 'Ciao! Questa è una prova vocale per le tue letture.';
+      } else if (lang.startsWith('pt')) {
+        text = 'Olá! Esta é uma demonstração de voz para os seus estudos.';
+      } else if (lang.startsWith('ja')) {
+        text = 'こんにちは。学習音声のプレビューです。';
+      } else if (lang.startsWith('zh')) {
+        text = '您好，这是用于朗读学习资料的语音预览。';
+      } else if (lang.startsWith('ar')) {
+        text = 'مرحبًا! هذا اختبار صوتي لقراءة مستنداتك.';
+      } else if (lang.startsWith('hi')) {
+        text = 'नमस्ते! यह आपकी पढ़ाई के लिए वॉयस टेस्ट है।';
+      } else {
+        text = "Hello! This is a preview of your reading voice for the student's companion.";
+      }
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
     if (voice) {
       utterance.voice = voice;
     }

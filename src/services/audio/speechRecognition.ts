@@ -84,7 +84,10 @@ export class VoiceRecognitionService {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
-    recognition.lang = typeof navigator !== 'undefined' ? navigator.language || 'en-US' : 'en-US';
+    const configuredLang = typeof localStorage !== 'undefined' ? localStorage.getItem('SELECTED_LANGUAGE') : null;
+    recognition.lang = configuredLang && configuredLang !== 'all'
+      ? configuredLang
+      : (typeof navigator !== 'undefined' ? navigator.language || 'en-US' : 'en-US');
 
     recognition.onstart = () => {
       this.isListening = true;

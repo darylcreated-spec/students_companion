@@ -16,7 +16,21 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('reader');
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    if (typeof localStorage !== 'undefined') {
+      return {
+        ...DEFAULT_SETTINGS,
+        selectedLanguage: localStorage.getItem('SELECTED_LANGUAGE') || DEFAULT_SETTINGS.selectedLanguage,
+        selectedVoiceURI: localStorage.getItem('SELECTED_VOICE_URI') || '',
+        speechPitch: parseFloat(localStorage.getItem('SPEECH_PITCH') || '1.0'),
+        speechRate: parseFloat(localStorage.getItem('SPEECH_RATE') || '1.0'),
+        cloudVoiceName: localStorage.getItem('CLOUD_VOICE_NAME') || DEFAULT_SETTINGS.cloudVoiceName,
+        googleCloudTtsKey: localStorage.getItem('GOOGLE_TTS_KEY') || '',
+        geminiApiKey: localStorage.getItem('GEMINI_API_KEY') || '',
+      };
+    }
+    return DEFAULT_SETTINGS;
+  });
 
   // Initialize DB data
   useEffect(() => {
