@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Mic, MicOff, Square, Download, FileText, Trash2, AlertCircle, Check } from 'lucide-react';
+import { Mic, Square, Download, FileText, Trash2, AlertCircle, Check, Smartphone, Sparkles } from 'lucide-react';
 import { VoiceRecognitionService } from '../services/audio/speechRecognition';
 import { WaveformVisualizer } from '../components/audio/WaveformVisualizer';
 
@@ -10,6 +10,7 @@ export const TranscriberMode: React.FC = () => {
   const [seconds, setSeconds] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [exportedFormat, setExportedFormat] = useState<string | null>(null);
+  const isSpeechSupported = VoiceRecognitionService.isSupported();
 
   const transcriptRef = useRef(transcript);
   transcriptRef.current = transcript;
@@ -31,12 +32,13 @@ export const TranscriberMode: React.FC = () => {
 
   const wordCount = transcript.trim() ? transcript.trim().split(/\s+/).length : 0;
 
-  const startRecording = useCallback(async () => {
+  // Start recording synchronously on user gesture (required for mobile iOS & Android)
+  const startRecording = useCallback(() => {
     setErrorMessage(null);
     setIsRecording(true);
     setSeconds(0);
 
-    await VoiceRecognitionService.startListening({
+    VoiceRecognitionService.startListening({
       onTranscriptChange: (text) => {
         setTranscript(text);
       },
@@ -44,8 +46,8 @@ export const TranscriberMode: React.FC = () => {
         setAudioLevel(lvl);
       },
       onStateChange: (state) => {
-        if (state === 'error') {
-          // Keep overlay open — user can type manually
+        if (state === 'idle') {
+          setIsRecording(false);
         }
       },
       onError: (err) => {
@@ -77,7 +79,7 @@ export const TranscriberMode: React.FC = () => {
     const filename = `transcription-${timestamp}`;
 
     if (format === 'txt') {
-      const blob = new Blob([text], { type: 'text/plain' });
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -85,7 +87,6 @@ export const TranscriberMode: React.FC = () => {
       a.click();
       URL.revokeObjectURL(url);
     } else if (format === 'pdf') {
-      // Use jspdf dynamically
       import('jspdf').then(({ jsPDF }) => {
         const doc = new jsPDF();
         doc.setFontSize(11);
@@ -94,9 +95,10 @@ export const TranscriberMode: React.FC = () => {
         doc.save(`${filename}.pdf`);
       });
     } else if (format === 'docx') {
-      // Simple HTML-to-Blob docx approach
       const html = `<html><body><p>${text.replace(/\n/g, '</p><p>')}</p></body></html>`;
-      const blob = new Blob([html], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const blob = new Blob([html], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -110,16 +112,23 @@ export const TranscriberMode: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col p-3 pb-2 overflow-hidden">
+    <div className="flex-1 flex flex-col p-3 pb-2 overflow-hidden select-none sm:select-auto">
       {/* Top Status Bar */}
       <div className="flex items-center justify-between pb-2 shrink-0">
         <div className="flex items-center space-x-2">
-          {isRecording && (
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+          {isRecording ? (
+            <>
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+              <span className="text-xs font-mono font-bold text-amber-400">
+                RECORDING ({formatTime(seconds)})
+              </span>
+            </>
+          ) : (
+            <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Mic className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Voice Transcriber</span>
+            </span>
           )}
-          <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
-            {isRecording ? `Recording ${formatTime(seconds)}` : 'Voice Transcriber'}
-          </span>
         </div>
 
         <div className="flex items-center space-x-2 text-[11px] font-mono text-slate-400">
@@ -136,16 +145,24 @@ export const TranscriberMode: React.FC = () => {
         </div>
       </div>
 
-      {/* Error Notice */}
+      {/* Error & Permission Notice */}
       {errorMessage && (
-        <div className="mb-2 p-2.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs flex items-start gap-2 font-sora shrink-0">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-          <p className="leading-tight">{errorMessage}</p>
+        <div className="mb-2 p-2.5 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs flex flex-col space-y-1.5 font-sora shrink-0">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <p className="leading-tight">{errorMessage}</p>
+          </div>
+          <div className="pt-1 border-t border-rose-500/20 text-[11px] text-rose-300/90 flex items-center gap-1.5">
+            <Smartphone className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+            <span>
+              Tip: You can also tap the box below and use the <strong>microphone button on your mobile keyboard</strong>.
+            </span>
+          </div>
         </div>
       )}
 
       {/* Waveform Visualizer (when recording) */}
-      {isRecording && !errorMessage && (
+      {isRecording && (
         <div className="py-1 shrink-0">
           <WaveformVisualizer
             isPlaying={isRecording}
@@ -158,15 +175,20 @@ export const TranscriberMode: React.FC = () => {
         </div>
       )}
 
-      {/* Large Proportional Content Window — fills available space (~70% viewport) */}
+      {/* Large Proportional Content Window — fills available space (~75% viewport) */}
       <div className="flex-1 min-h-0 flex flex-col rounded-2xl bg-[#0E1426]/90 border border-cyan-400/20 shadow-xl overflow-hidden">
         <div className="px-3.5 py-2 bg-slate-900/80 border-b border-white/5 flex items-center justify-between shrink-0">
-          <span className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider">
-            Transcription
+          <span className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <span>Transcription Window</span>
           </span>
-          {isRecording && (
-            <span className="text-[10px] font-mono text-amber-400 animate-pulse">
-              ● LIVE
+          {isRecording ? (
+            <span className="text-[10px] font-mono text-amber-400 animate-pulse flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span>LIVE AUDIO</span>
+            </span>
+          ) : (
+            <span className="text-[10px] font-mono text-slate-400">
+              Tap below to edit or type
             </span>
           )}
         </div>
@@ -174,19 +196,24 @@ export const TranscriberMode: React.FC = () => {
         <textarea
           value={transcript}
           onChange={(e) => setTranscript(e.target.value)}
-          placeholder={isRecording
-            ? "Listening... speak naturally. Your words will appear here in real time."
-            : "Tap the microphone below to start recording, or type directly here..."
+          placeholder={
+            isRecording
+              ? "Listening... speak into your device's microphone now."
+              : "Tap the microphone below to dictate, or tap here to type / use your mobile keyboard microphone..."
           }
-          className="flex-1 w-full p-4 bg-transparent text-sm text-slate-100 font-sora leading-relaxed resize-none focus:outline-none placeholder:text-slate-500 placeholder:italic overflow-y-auto"
+          autoCapitalize="sentences"
+          autoCorrect="on"
+          spellCheck={true}
+          className="flex-1 w-full p-4 bg-transparent text-sm text-slate-100 font-sora leading-relaxed resize-none focus:outline-none placeholder:text-slate-500 placeholder:italic overflow-y-auto touch-manipulation"
         />
       </div>
 
       {/* Record / Stop Control */}
-      <div className="flex items-center justify-center py-3 shrink-0">
+      <div className="flex flex-col items-center justify-center py-2.5 shrink-0 space-y-1">
         {isRecording ? (
           <button
             onClick={stopRecording}
+            aria-label="Stop recording"
             className="w-16 h-16 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-[0_0_30px_rgba(239,68,68,0.5)] hover:brightness-110 active:scale-95 transition-all"
           >
             <Square className="w-6 h-6 fill-current" />
@@ -194,11 +221,16 @@ export const TranscriberMode: React.FC = () => {
         ) : (
           <button
             onClick={startRecording}
+            aria-label="Start microphone dictation"
             className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-500 text-[#0A0F1D] flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.5)] hover:scale-105 active:scale-95 transition-all"
           >
             <Mic className="w-7 h-7" />
           </button>
         )}
+
+        <span className="text-[10px] font-mono text-slate-400">
+          {isRecording ? 'Tap to Stop' : 'Tap Mic to Start Dictating'}
+        </span>
       </div>
 
       {/* Export Bar */}
@@ -212,7 +244,7 @@ export const TranscriberMode: React.FC = () => {
                 : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-400/50'
             }`}
           >
-            {exportedFormat === 'txt' ? <Check className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
+            {exportedFormat === 'txt' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Download className="w-3.5 h-3.5" />}
             <span>TXT</span>
           </button>
 
@@ -224,7 +256,7 @@ export const TranscriberMode: React.FC = () => {
                 : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-400/50'
             }`}
           >
-            {exportedFormat === 'pdf' ? <Check className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
+            {exportedFormat === 'pdf' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <FileText className="w-3.5 h-3.5" />}
             <span>PDF</span>
           </button>
 
@@ -236,7 +268,7 @@ export const TranscriberMode: React.FC = () => {
                 : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-400/50'
             }`}
           >
-            {exportedFormat === 'docx' ? <Check className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
+            {exportedFormat === 'docx' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <FileText className="w-3.5 h-3.5" />}
             <span>DOCX</span>
           </button>
         </div>
