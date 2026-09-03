@@ -1,4 +1,5 @@
 import { PlaybackRate } from '../../types';
+import { DeviceDetector } from '../device/deviceDetector';
 
 export interface TTSPlaybackCallbacks {
   onStart?: () => void;
@@ -23,6 +24,17 @@ export class TTSEngine {
   private static isPaused = false;
   private static activeCallbacks: TTSPlaybackCallbacks = {};
   private static currentText = '';
+  private static chromeKeepAliveTimer: any = null;
+
+  static {
+    // Listen for dynamic voice loading across browsers (Chrome, Safari, Firefox)
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        // Voices ready
+      };
+      DeviceDetector.unlockAudioContext();
+    }
+  }
 
   /**
    * Returns all available speech synthesis voices installed in the user's browser/OS.
@@ -33,7 +45,7 @@ export class TTSEngine {
   }
 
   /**
-   * Initializes background audio keep-alive for mobile PWAs.
+   * Initializes background audio keep-alive for mobile PWAs and iOS Safari.
    */
   public static initBackgroundAudio() {
     if (typeof window === 'undefined') return;
@@ -59,7 +71,7 @@ export class TTSEngine {
     this.currentRate = rate;
     this.activeCallbacks = callbacks;
 
-    // Start silent audio for background persistence
+    // Start silent audio for mobile background persistence
     try {
       this.initBackgroundAudio();
       this.silentAudio?.play().catch(() => {});
@@ -76,7 +88,7 @@ export class TTSEngine {
       }
     }
 
-    // Zero-latency native Web Speech API
+    // Zero-latency native Web Speech API with cross-browser patches
     this.speakViaBrowser(text, rate, callbacks, voiceURI, pitch);
   }
 
@@ -117,7 +129,8 @@ export class TTSEngine {
               v.name.includes('Samantha') ||
               v.name.includes('Daniel') ||
               v.name.includes('Karen') ||
-              v.name.includes('Victoria'))
+              v.name.includes('Victoria') ||
+              v.name.includes('Siri'))
         ) ||
         voices.find((v) => v.lang.startsWith('en')) ||
         voices[0];
@@ -133,16 +146,19 @@ export class TTSEngine {
     utterance.onstart = () => {
       this.isPlaying = true;
       this.isPaused = false;
+      this.startChromeKeepAlive();
       callbacks.onStart?.();
     };
 
     utterance.onend = () => {
       this.isPlaying = false;
       this.isPaused = false;
+      this.stopChromeKeepAlive();
       callbacks.onEnd?.();
     };
 
     utterance.onerror = (e) => {
+      this.stopChromeKeepAlive();
       if (e.error === 'interrupted' || e.error === 'canceled') {
         return;
       }
@@ -168,6 +184,26 @@ export class TTSEngine {
     };
 
     this.synth.speak(utterance);
+  }
+
+  /**
+   * Chromium / Chrome bugfix: Prevents speech synthesis from automatically pausing after 14 seconds.
+   */
+  private static startChromeKeepAlive() {
+    this.stopChromeKeepAlive();
+    this.chromeKeepAliveTimer = setInterval(() => {
+      if (this.synth && this.isPlaying && !this.isPaused) {
+        this.synth.pause();
+        this.synth.resume();
+      }
+    }, 10000);
+  }
+
+  private static stopChromeKeepAlive() {
+    if (this.chromeKeepAliveTimer) {
+      clearInterval(this.chromeKeepAliveTimer);
+      this.chromeKeepAliveTimer = null;
+    }
   }
 
   /**
@@ -207,32 +243,33 @@ export class TTSEngine {
       audioConfig: {
         audioEncoding: 'MP3',
         speakingRate: rate,
-        pitch: 0.0,
       },
     };
 
-    const response = await fetch(url, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
-      const errJson = await response.json();
-      throw new Error(errJson.error?.message || 'Google Cloud TTS API call failed');
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'Cloud TTS API failed');
     }
 
-    const data = await response.json();
-    const audioBase64 = data.audioContent;
-    const audioSrc = `data:audio/mp3;base64,${audioBase64}`;
+    const data = await res.json();
+    const audioContent = data.audioContent;
+    const audioBlob = this.base64ToBlob(audioContent, 'audio/mp3');
+    const audioUrl = URL.createObjectURL(audioBlob);
 
     if (this.audioElement) {
       this.audioElement.pause();
-      this.audioElement.src = '';
+      this.audioElement = null;
     }
 
-    const audio = new Audio(audioSrc);
+    const audio = new Audio(audioUrl);
     this.audioElement = audio;
+    audio.playbackRate = rate;
 
     audio.onplay = () => {
       this.isPlaying = true;
@@ -262,60 +299,60 @@ export class TTSEngine {
     await audio.play();
   }
 
-  public static pause(): void {
-    if (this.audioElement && !this.audioElement.paused) {
+  public static pause() {
+    this.stopChromeKeepAlive();
+    if (this.audioElement) {
       this.audioElement.pause();
-      this.isPaused = true;
-      return;
-    }
-
-    if (this.synth && this.isPlaying && !this.isPaused) {
+    } else if (this.synth) {
       this.synth.pause();
-      this.isPaused = true;
     }
+    this.isPaused = true;
   }
 
-  public static resume(): void {
-    if (this.audioElement && this.audioElement.paused) {
+  public static resume() {
+    if (this.audioElement) {
       this.audioElement.play().catch(() => {});
-      this.isPaused = false;
-      return;
-    }
-
-    if (this.synth && this.isPaused) {
+    } else if (this.synth) {
       this.synth.resume();
-      this.isPaused = false;
+      this.startChromeKeepAlive();
     }
+    this.isPaused = false;
   }
 
-  public static stop(): void {
+  public static stop() {
+    this.stopChromeKeepAlive();
     if (this.audioElement) {
       this.audioElement.pause();
       this.audioElement.currentTime = 0;
       this.audioElement = null;
     }
-
     if (this.synth) {
       this.synth.cancel();
     }
-
     this.isPlaying = false;
     this.isPaused = false;
-    this.currentUtterance = null;
   }
 
-  public static setRate(rate: PlaybackRate): void {
+  public static setRate(rate: PlaybackRate) {
     this.currentRate = rate;
-    if (this.isPlaying && this.currentText) {
-      this.speak(this.currentText, rate, this.activeCallbacks);
+    if (this.audioElement) {
+      this.audioElement.playbackRate = rate;
+    } else if (this.isPlaying && this.currentUtterance && this.synth) {
+      // Browser TTS requires re-speaking with new rate
+      const currentText = this.currentText;
+      const callbacks = this.activeCallbacks;
+      this.stop();
+      this.speakViaBrowser(currentText, rate, callbacks);
     }
   }
 
-  public static getPlaybackState() {
-    return {
-      isPlaying: this.isPlaying,
-      isPaused: this.isPaused,
-      currentRate: this.currentRate,
-    };
+  private static base64ToBlob(base64: string, mime: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mime });
   }
 }
