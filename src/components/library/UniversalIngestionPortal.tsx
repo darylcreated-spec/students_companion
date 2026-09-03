@@ -295,29 +295,29 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
           {/* Mode 1: File Dropzone & Camera OCR Scan */}
           {activeMode === 'files-ocr' && (
             <div className="space-y-2">
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full p-5 rounded-2xl border-2 border-dashed border-slate-700/80 hover:border-cyan-400/60 bg-[#0A0F1D]/60 hover:bg-[#0A0F1D]/90 transition-all cursor-pointer flex flex-col items-center justify-center text-center group"
+              <label
+                htmlFor="universal-file-input"
+                className="w-full p-5 rounded-2xl border-2 border-dashed border-slate-700/80 hover:border-cyan-400/60 bg-[#0A0F1D]/60 hover:bg-[#0A0F1D]/90 transition-all cursor-pointer flex flex-col items-center justify-center text-center group active:scale-[0.99] touch-manipulation select-none"
               >
                 <div className="w-11 h-11 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 mb-2 group-hover:scale-105 transition-transform">
                   <UploadCloud className="w-6 h-6" />
                 </div>
                 <h4 className="text-sm font-bold text-slate-100">
-                  Drop PDF, Word, PPTX, or Book Scans
+                  Select Document or Photo Scan
                 </h4>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Tap to browse device files or book scans
+                  Tap to open phone's file manager (PDF, Word, PPTX, Images)
                 </p>
-              </div>
+              </label>
 
               {/* Instant Camera Scan Button for OCR */}
-              <button
-                onClick={() => cameraInputRef.current?.click()}
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-400 text-slate-300 hover:text-amber-300 text-xs font-mono flex items-center justify-center space-x-2 transition-colors"
+              <label
+                htmlFor="universal-camera-input"
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-400 text-slate-300 hover:text-amber-300 text-xs font-mono flex items-center justify-center space-x-2 transition-colors cursor-pointer active:scale-[0.99] touch-manipulation select-none"
               >
                 <Camera className="w-4 h-4 text-amber-400" />
                 <span>Take Photo / OCR Scan Book Page</span>
-              </button>
+              </label>
             </div>
           )}
 
@@ -403,6 +403,33 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
           )}
         </div>
       )}
+
+      {/* Native Mobile / Desktop File Manager Input */}
+      <input
+        id="universal-file-input"
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.docx,.pptx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/markdown,image/*"
+        onChange={(e) => {
+          handleFileUpload(e.target.files);
+          e.target.value = '';
+        }}
+        className="sr-only"
+      />
+
+      {/* Native Camera Capture Input for Book Page Photo OCR */}
+      <input
+        id="universal-camera-input"
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => {
+          handleFileUpload(e.target.files);
+          e.target.value = '';
+        }}
+        className="sr-only"
+      />
     </div>
   );
 };

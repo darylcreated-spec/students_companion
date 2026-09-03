@@ -112,16 +112,18 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
 
         <button
           onClick={() => setIsImportOpen(!isImportOpen)}
-          className="ml-2 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-cyan-400/30 hover:border-cyan-400 text-[10px] font-mono text-cyan-300 transition-colors flex items-center gap-1 shrink-0"
+          aria-label="Add or Import Document"
+          className="ml-2 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-950 border border-cyan-400/40 hover:border-cyan-400 text-[11px] font-mono text-cyan-300 transition-all flex items-center gap-1.5 shrink-0 shadow-[0_0_8px_rgba(34,211,238,0.2)] active:scale-95"
         >
-          <Upload className="w-3 h-3" />
+          <Upload className="w-3.5 h-3.5 text-cyan-400" />
+          <span>{isImportOpen ? 'Close' : '+ Add File'}</span>
           {isImportOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         </button>
       </div>
 
       {/* Collapsible Import Section */}
       {isImportOpen && (
-        <div className="mb-2 shrink-0 max-h-[35vh] overflow-y-auto rounded-2xl border border-white/5 bg-[#0E1426]/60 p-3 space-y-2">
+        <div className="mb-2 shrink-0 max-h-[52vh] overflow-y-auto rounded-2xl border border-white/5 bg-[#0E1426]/60 p-3 space-y-2">
           <UniversalIngestionPortal onDocumentAdded={(doc, idx) => { setIsImportOpen(false); onDocumentAdded(doc, idx); }} />
           {documents.length > 1 && (
             <div className="space-y-1.5 pt-1">

@@ -154,4 +154,32 @@ Respond ONLY with valid JSON in this exact structure:
       category
     };
   }
+
+  /**
+   * Multimodal Vision OCR: Extracts text from book photos or scanned pages with high accuracy.
+   */
+  public static async ocrImageWithGemini(
+    imageBase64: string,
+    mimeType: string = 'image/jpeg',
+    apiKey?: string
+  ): Promise<string> {
+    const client = this.getClient(apiKey);
+    if (!client) throw new Error('No Gemini API key available');
+
+    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const prompt =
+      'Extract and transcribe all written or printed text in this document/photo verbatim. Do not add conversational commentary or preamble. Preserve headings and paragraph structure accurately.';
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: imageBase64,
+          mimeType,
+        },
+      },
+    ]);
+
+    return result.response.text().trim();
+  }
 }

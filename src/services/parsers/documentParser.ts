@@ -75,14 +75,12 @@ export async function extractDocumentText(
         pageOrSlide: p.pageNumber,
       }));
     } else if (
-      fileName.endsWith('.png') ||
-      fileName.endsWith('.jpg') ||
-      fileName.endsWith('.jpeg') ||
-      fileName.endsWith('.webp') ||
-      fileName.endsWith('.bmp')
+      (file.type && file.type.startsWith('image/')) ||
+      /\.(png|jpe?g|webp|bmp|gif|heic|tiff?)$/i.test(fileName) ||
+      sourceType === 'image-ocr'
     ) {
       type = 'txt';
-      onProgress?.(20, 'Running OCR image recognition...');
+      onProgress?.(20, 'Running OCR image recognition on photo scan...');
       const ocrResult = await parseImageOcr(file, onProgress);
       rawText = ocrResult.text;
       totalCount = 1;
