@@ -9,6 +9,8 @@ interface ApiKeyModalProps {
   onClose: () => void;
   settings: AppSettings;
   onSaveSettings: (settings: AppSettings) => void;
+  onOpenInstall?: () => void;
+  isInstalled?: boolean;
 }
 
 export const SUPPORTED_LANGUAGES = [
@@ -40,6 +42,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
   onClose,
   settings,
   onSaveSettings,
+  onOpenInstall,
+  isInstalled = false,
 }) => {
   const [selectedLang, setSelectedLang] = useState(
     settings.selectedLanguage || localStorage.getItem('SELECTED_LANGUAGE') || 'en-US'
@@ -358,6 +362,21 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
             </div>
           )}
         </div>
+
+        {/* Mobile PWA Install Option */}
+        {!isInstalled && onOpenInstall && (
+          <div className="pt-1 border-t border-white/5">
+            <button
+              onClick={() => {
+                onClose();
+                onOpenInstall();
+              }}
+              className="w-full py-2.5 rounded-xl bg-cyan-950/50 hover:bg-cyan-900/60 border border-cyan-400/40 text-cyan-300 font-mono font-bold text-xs flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-[0_0_10px_rgba(34,211,238,0.2)]"
+            >
+              <span>📲 Install as Mobile App (PWA)</span>
+            </button>
+          </div>
+        )}
 
         {/* Save Button */}
         <button

@@ -8,14 +8,19 @@ import { BottomNav, NavTab } from './components/layout/BottomNav';
 import { ReaderMode } from './screens/ReaderMode';
 import { TranscriberMode } from './screens/TranscriberMode';
 import { ApiKeyModal } from './components/common/ApiKeyModal';
-import { LoadingScreen } from './components/common/LoadingScreen';
+import { PwaInstallModal } from './components/common/PwaInstallModal';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
+import { usePwaInstall } from './hooks/usePwaInstall';
 
 export default function App() {
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<NavTab>('reader');
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isPwaModalOpen, setIsPwaModalOpen] = useState(false);
+
+  // PWA Install Hook for Mobile Browsers
+  const { isInstallable, isInstalled, isIOS, triggerInstall } = usePwaInstall();
+
   const [settings, setSettings] = useState<AppSettings>(() => {
     if (typeof localStorage !== 'undefined') {
       return {
@@ -54,8 +59,6 @@ export default function App() {
     playerState,
     currentSegment,
     togglePlayPause,
-    pause,
-    resume,
     skip,
     setPlaybackRate,
     nextChapter,
@@ -84,71 +87,81 @@ export default function App() {
   };
 
   return (
-    <>
-      {isLoading && <LoadingScreen onLoaded={() => setIsLoading(false)} />}
+    <MobileContainer>
+      {/* Top Header with PWA Mobile Install Option & Settings */}
+      <TopHeader
+        title={
+          activeTab === 'reader'
+            ? (activeDocument ? activeDocument.title : "Reader")
+            : "Transcriber"
+        }
+        subtitle={
+          activeTab === 'reader' && activeDocument && currentSegment
+            ? `Ch ${playerState.currentSegmentIndex + 1}: ${currentSegment.title}`
+            : undefined
+        }
+        hasApiKey={!!settings.geminiApiKey}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenInstall={() => setIsPwaModalOpen(true)}
+        isInstalled={isInstalled}
+      />
 
-      <MobileContainer>
-        {/* Top Header */}
-        <TopHeader
-          title={
-            activeTab === 'reader'
-              ? (activeDocument ? activeDocument.title : "Reader")
-              : "Transcriber"
-          }
-          subtitle={
-            activeTab === 'reader' && activeDocument && currentSegment
-              ? `Ch ${playerState.currentSegmentIndex + 1}: ${currentSegment.title}`
-              : undefined
-          }
-          hasApiKey={!!settings.geminiApiKey}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+      {/* Mode Screens */}
+      {activeTab === 'reader' && (
+        <ReaderMode
+          documents={documents}
+          activeDocument={activeDocument}
+          activeDocumentId={activeDocId}
+          currentSegment={currentSegment}
+          playerState={playerState}
+          onTogglePlayPause={togglePlayPause}
+          onSkipBackward={() => skip(-15)}
+          onSkipForward={() => skip(15)}
+          onPreviousChapter={previousChapter}
+          onNextChapter={nextChapter}
+          onRateChange={setPlaybackRate}
+          onSeek={seekToTime}
+          onSelectChapter={(idx) => playSegment(idx, 0)}
+          onSentenceClick={playFromSentence}
+          onSelectDocument={(doc) => setActiveDocId(doc.id)}
+          onPlayToggle={handlePlayToggle}
+          onDocumentAdded={(doc, startChapterIndex = 0) => {
+            setActiveDocId(doc.id);
+            setTimeout(() => playSegment(startChapterIndex, 0), 250);
+          }}
+          onDeleteDocument={handleDeleteDocument}
         />
+      )}
 
-        {/* Mode Screens */}
-        {activeTab === 'reader' && (
-          <ReaderMode
-            documents={documents}
-            activeDocument={activeDocument}
-            activeDocumentId={activeDocId}
-            currentSegment={currentSegment}
-            playerState={playerState}
-            onTogglePlayPause={togglePlayPause}
-            onSkipBackward={() => skip(-15)}
-            onSkipForward={() => skip(15)}
-            onPreviousChapter={previousChapter}
-            onNextChapter={nextChapter}
-            onRateChange={setPlaybackRate}
-            onSeek={seekToTime}
-            onSelectChapter={(idx) => playSegment(idx, 0)}
-            onSentenceClick={playFromSentence}
-            onSelectDocument={(doc) => setActiveDocId(doc.id)}
-            onPlayToggle={handlePlayToggle}
-            onDocumentAdded={(doc, startChapterIndex = 0) => {
-              setActiveDocId(doc.id);
-              setTimeout(() => playSegment(startChapterIndex, 0), 250);
-            }}
-            onDeleteDocument={handleDeleteDocument}
-          />
-        )}
+      {activeTab === 'transcriber' && (
+        <TranscriberMode />
+      )}
 
-        {activeTab === 'transcriber' && (
-          <TranscriberMode />
-        )}
+      {/* 2-Tab Bottom Navigation */}
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
-        {/* 2-Tab Bottom Navigation */}
-        <BottomNav
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+      {/* Language & Voice Settings Modal */}
+      <ApiKeyModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        settings={settings}
+        onSaveSettings={setSettings}
+        onOpenInstall={() => setIsPwaModalOpen(true)}
+        isInstalled={isInstalled}
+      />
 
-        {/* Settings Modal */}
-        <ApiKeyModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          settings={settings}
-          onSaveSettings={setSettings}
-        />
-      </MobileContainer>
-    </>
+      {/* Mobile PWA Install Modal (iOS Safari & Android) */}
+      <PwaInstallModal
+        isOpen={isPwaModalOpen}
+        onClose={() => setIsPwaModalOpen(false)}
+        isIOS={isIOS}
+        isInstallable={isInstallable}
+        isInstalled={isInstalled}
+        onInstall={triggerInstall}
+      />
+    </MobileContainer>
   );
 }
