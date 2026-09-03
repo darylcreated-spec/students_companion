@@ -127,7 +127,10 @@ export default function App() {
           onSeek={seekToTime}
           onSelectChapter={(idx) => playSegment(idx, 0)}
           onSentenceClick={playFromSentence}
-          onSelectDocument={(doc) => setActiveDocId(doc.id)}
+          onSelectDocument={(doc) => {
+            setActiveDocId(doc.id);
+            setTimeout(() => playSegment(0, 0), 50);
+          }}
           onPlayToggle={handlePlayToggle}
           onDocumentAdded={(doc, startChapterIndex = 0) => {
             setActiveDocId(doc.id);

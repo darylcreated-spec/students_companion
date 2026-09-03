@@ -83,6 +83,7 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
         <div className="flex items-center space-x-2">
           {onOpenChapterPicker && (
             <button
+              id="chapters-picker-btn"
               onClick={onOpenChapterPicker}
               className="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-cyan-950 text-cyan-300 border border-cyan-400/30 text-[10px] font-mono flex items-center gap-1 transition-colors"
             >
