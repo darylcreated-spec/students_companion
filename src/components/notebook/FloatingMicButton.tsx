@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mic, Check, X, Loader2, Cpu } from 'lucide-react';
+import { Mic, Check, X, Loader2, Cpu, AlertCircle, Edit3 } from 'lucide-react';
 import { WaveformVisualizer } from '../audio/WaveformVisualizer';
 
 interface FloatingMicButtonProps {
@@ -8,10 +8,11 @@ interface FloatingMicButtonProps {
   transcript: string;
   audioLevel: number;
   capturedTimestamp: string;
+  errorMessage?: string | null;
   onStartDictation: () => void;
   onFinalizeDictation: () => void;
   onCancelDictation: () => void;
-  onManualTextChange?: (text: string) => void;
+  onTranscriptChange?: (text: string) => void;
 }
 
 export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({
@@ -20,9 +21,11 @@ export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({
   transcript,
   audioLevel,
   capturedTimestamp,
+  errorMessage,
   onStartDictation,
   onFinalizeDictation,
   onCancelDictation,
+  onTranscriptChange,
 }) => {
   const [seconds, setSeconds] = useState(0);
 
@@ -70,7 +73,7 @@ export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({
               <div className="flex items-center space-x-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
                 <span className="text-xs font-mono font-bold text-amber-400">
-                  {isProcessing ? 'SYNTHESIZING NOTE...' : `CONTINUOUS DICTATION (${formatSecs(seconds)})`}
+                  {isProcessing ? 'SYNTHESIZING STUDY NOTE...' : `VOICE DICTATION (${formatSecs(seconds)})`}
                 </span>
               </div>
 
@@ -79,36 +82,47 @@ export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({
               </span>
             </div>
 
+            {/* Error / Permission Notice */}
+            {errorMessage && (
+              <div className="p-2.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs flex items-start gap-2 font-sora">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <p className="leading-tight">{errorMessage}</p>
+              </div>
+            )}
+
             {/* Live Audio Waveform Canvas */}
-            <div className="py-2">
-              <WaveformVisualizer
-                isPlaying={isRecording}
-                progress={0.5}
-                audioLevel={audioLevel}
-                activeColor="#FBBF24"
-                inactiveColor="rgba(251, 191, 36, 0.2)"
-                height={55}
+            {!errorMessage && (
+              <div className="py-1">
+                <WaveformVisualizer
+                  isPlaying={isRecording}
+                  progress={0.5}
+                  audioLevel={audioLevel}
+                  activeColor="#FBBF24"
+                  inactiveColor="rgba(251, 191, 36, 0.2)"
+                  height={45}
+                />
+              </div>
+            )}
+
+            {/* Live Streaming Editable Transcription Box */}
+            <div className="w-full min-h-[100px] max-h-[150px] p-3 rounded-2xl bg-slate-950/90 border border-slate-800 text-slate-100 flex flex-col justify-between">
+              <textarea
+                value={transcript}
+                onChange={(e) => onTranscriptChange?.(e.target.value)}
+                placeholder="Listening... Speak naturally or type your note here..."
+                rows={3}
+                className="w-full bg-transparent text-sm font-medium text-slate-100 font-sora leading-relaxed resize-none focus:outline-none placeholder:text-slate-500 placeholder:italic"
               />
-            </div>
 
-            {/* Live Streaming Transcription Box */}
-            <div className="w-full min-h-[90px] max-h-[140px] overflow-y-auto p-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-slate-100 flex flex-col justify-between">
-              {transcript ? (
-                <p className="text-sm font-medium text-slate-100 font-sora leading-relaxed">
-                  "{transcript}"
-                </p>
-              ) : (
-                <p className="text-xs text-slate-500 italic font-mono animate-pulse">
-                  Continuous mode active. Speak naturally as long as you want...
-                </p>
-              )}
-
-              <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-2 text-[10px] font-mono text-slate-400">
-                <span>{wordCount} Words Transcribed</span>
+              <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-1 text-[10px] font-mono text-slate-400">
+                <span className="flex items-center gap-1">
+                  <Edit3 className="w-3 h-3 text-amber-400" />
+                  <span>{wordCount} Words</span>
+                </span>
                 {isProcessing && (
                   <span className="text-cyan-400 flex items-center gap-1">
-                    <Cpu className="w-3 h-3 text-amber-400" />
-                    <span>Organizing study note...</span>
+                    <Cpu className="w-3 h-3 text-amber-400 animate-spin" />
+                    <span>Organizing note...</span>
                   </span>
                 )}
               </div>
@@ -135,7 +149,7 @@ export const FloatingMicButton: React.FC<FloatingMicButtonProps> = ({
                 ) : (
                   <>
                     <Check className="w-4 h-4" />
-                    <span>Done & Resume Audio</span>
+                    <span>Save Note & Resume</span>
                   </>
                 )}
               </button>

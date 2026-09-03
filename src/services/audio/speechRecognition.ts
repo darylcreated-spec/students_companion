@@ -30,77 +30,113 @@ export class VoiceRecognitionService {
     this.accumulatedTranscript = '';
     this.currentCallbacks = callbacks;
 
-    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    // 1. Try starting audio level visualizer without blocking speech recognition
+    this.initAudioVisualizer(callbacks).catch((e) => {
+      console.warn('Audio level visualizer could not be initialized:', e);
+    });
+
+    // 2. Initialize Speech Recognition
+    const SpeechRec =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
     if (!SpeechRec) {
-      callbacks.onError('Web Speech Recognition is not supported in this browser.');
+      callbacks.onStateChange('listening'); // Fallback to manual/browser input
+      callbacks.onError('Web Speech API is not supported in this browser. You can type your note directly.');
       return;
     }
 
     try {
-      // 1. Initialize Microphone Audio Stream for Live Visualizer
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
-          this.microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-          const source = this.audioContext.createMediaStreamSource(this.microphoneStream);
-          this.analyser = this.audioContext.createAnalyser();
-          this.analyser.fftSize = 256;
-          source.connect(this.analyser);
-
-          this.startAudioLevelPolling(callbacks);
-        } catch (e) {
-          console.warn('Microphone stream for visualizer not granted:', e);
-        }
-      }
-
       this.initRecognition(SpeechRec, callbacks);
     } catch (err: any) {
-      callbacks.onError(err.message || 'Failed to start speech recognition');
+      console.error('Speech recognition initiation error:', err);
+      callbacks.onError(err.message || 'Failed to access speech recognition');
       callbacks.onStateChange('error');
     }
   }
 
-  private static initRecognition(SpeechRec: any, callbacks: VoiceCaptureCallbacks) {
-    this.recognition = new SpeechRec();
-    this.recognition.continuous = true;
-    this.recognition.interimResults = true;
-    this.recognition.lang = 'en-US';
+  private static async initAudioVisualizer(callbacks: VoiceCaptureCallbacks) {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) return;
 
-    this.recognition.onstart = () => {
+    try {
+      this.microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      this.audioContext = new AudioCtx();
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+
+      const source = this.audioContext.createMediaStreamSource(this.microphoneStream);
+      this.analyser = this.audioContext.createAnalyser();
+      this.analyser.fftSize = 256;
+      source.connect(this.analyser);
+
+      this.startAudioLevelPolling(callbacks);
+    } catch (err) {
+      console.warn('Microphone stream for waveform visualizer not granted:', err);
+    }
+  }
+
+  private static initRecognition(SpeechRec: any, callbacks: VoiceCaptureCallbacks) {
+    const recognition = new SpeechRec();
+    this.recognition = recognition;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.lang = typeof navigator !== 'undefined' ? navigator.language || 'en-US' : 'en-US';
+
+    recognition.onstart = () => {
       this.isListening = true;
       callbacks.onStateChange('listening');
     };
 
-    this.recognition.onresult = (event: any) => {
+    recognition.onresult = (event: any) => {
       let interimText = '';
+      let newFinal = '';
+
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          this.accumulatedTranscript += ' ' + transcript;
+        const item = event.results[i];
+        const text = item[0]?.transcript || '';
+
+        if (item.isFinal) {
+          newFinal += ' ' + text;
         } else {
-          interimText += transcript;
+          interimText += ' ' + text;
         }
+      }
+
+      if (newFinal.trim()) {
+        this.accumulatedTranscript = (this.accumulatedTranscript + ' ' + newFinal).trim();
       }
 
       const fullCurrentText = (this.accumulatedTranscript + ' ' + interimText).trim();
       callbacks.onTranscriptChange(fullCurrentText, false);
     };
 
-    this.recognition.onerror = (event: any) => {
-      if (event.error === 'no-speech' || event.error === 'network') {
-        // In continuous mode, harmless network or quiet period renegotiation
+    recognition.onerror = (event: any) => {
+      console.warn('Speech recognition event error:', event.error);
+      if (
+        event.error === 'no-speech' ||
+        event.error === 'network' ||
+        event.error === 'aborted'
+      ) {
+        // Recoverable silence / network event
         return;
       }
-      console.warn('Speech recognition warning:', event.error);
+
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        callbacks.onError('Microphone permission denied. Please allow microphone access in your browser settings.');
+        callbacks.onStateChange('error');
+      }
     };
 
-    // Infinite Continuous Listening: Auto-restart if browser buffer finishes and user didn't stop
-    this.recognition.onend = () => {
+    recognition.onend = () => {
       if (this.isListening && !this.explicitlyStopped) {
         try {
           // Reconnect instantly for continuous recording
-          this.recognition?.start();
-        } catch (_) {
+          recognition.start();
+        } catch {
           this.isListening = false;
           callbacks.onStateChange('idle');
         }
@@ -110,7 +146,12 @@ export class VoiceRecognitionService {
       }
     };
 
-    this.recognition.start();
+    try {
+      recognition.start();
+    } catch (e: any) {
+      console.warn('SpeechRecognition start failed:', e);
+      callbacks.onError('Failed to start microphone speech engine.');
+    }
   }
 
   private static startAudioLevelPolling(callbacks: VoiceCaptureCallbacks) {
@@ -122,39 +163,25 @@ export class VoiceRecognitionService {
       if (!this.analyser || !this.isListening) return;
 
       this.analyser.getByteFrequencyData(dataArray);
+
       let sum = 0;
       for (let i = 0; i < dataArray.length; i++) {
         sum += dataArray[i];
       }
+
       const average = sum / dataArray.length;
-      const normalizedLevel = Math.min(1.0, average / 80);
+      const normalizedLevel = Math.min(1.0, average / 128);
 
       callbacks.onAudioLevelChange(normalizedLevel);
       this.animFrameId = requestAnimationFrame(poll);
     };
 
-    poll();
+    this.animFrameId = requestAnimationFrame(poll);
   }
 
   public static stopListening(): string {
     this.explicitlyStopped = true;
     this.isListening = false;
-
-    if (this.animFrameId) {
-      cancelAnimationFrame(this.animFrameId);
-      this.animFrameId = null;
-    }
-
-    if (this.microphoneStream) {
-      this.microphoneStream.getTracks().forEach(track => track.stop());
-      this.microphoneStream = null;
-    }
-
-    if (this.audioContext) {
-      this.audioContext.close().catch(() => {});
-      this.audioContext = null;
-      this.analyser = null;
-    }
 
     if (this.recognition) {
       try {
@@ -163,10 +190,23 @@ export class VoiceRecognitionService {
       this.recognition = null;
     }
 
-    return this.accumulatedTranscript.trim();
-  }
+    if (this.animFrameId) {
+      cancelAnimationFrame(this.animFrameId);
+      this.animFrameId = null;
+    }
 
-  public static getIsListening(): boolean {
-    return this.isListening;
+    if (this.microphoneStream) {
+      this.microphoneStream.getTracks().forEach((track) => track.stop());
+      this.microphoneStream = null;
+    }
+
+    if (this.audioContext) {
+      this.audioContext.close().catch(() => {});
+      this.audioContext = null;
+    }
+
+    const final = this.accumulatedTranscript.trim();
+    this.accumulatedTranscript = '';
+    return final;
   }
 }

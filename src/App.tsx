@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, seedInitialDataIfEmpty, DEFAULT_SETTINGS } from './db/database';
-import { LectureDocument, CommuteNote, AppSettings, PlaybackRate } from './types';
+import { db, seedInitialDataIfEmpty } from './db/database';
+import { LectureDocument, AppSettings, DEFAULT_SETTINGS } from './types';
 import { MobileContainer } from './components/layout/MobileContainer';
 import { TopHeader } from './components/layout/TopHeader';
 import { BottomNav, NavTab } from './components/layout/BottomNav';
@@ -11,11 +11,12 @@ import { CommuteNotebook } from './screens/CommuteNotebook';
 import { ExportReview } from './screens/ExportReview';
 import { ApiKeyModal } from './components/common/ApiKeyModal';
 import { LoadingScreen } from './components/common/LoadingScreen';
+import { FloatingMicButton } from './components/notebook/FloatingMicButton';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useVoiceDictation } from './hooks/useVoiceDictation';
 import { GeminiService } from './services/ai/geminiService';
 
-export function App() {
+export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<NavTab>('audio');
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
@@ -62,8 +63,10 @@ export function App() {
     isRecording,
     isProcessing,
     transcript,
+    setTranscript,
     audioLevel,
     capturedTimestamp,
+    errorMessage,
     startDictation,
     finalizeDictation,
     cancelDictation,
@@ -113,40 +116,43 @@ export function App() {
 
   // Jump from note to exact lecture moment
   const handleJumpToAudio = (timestampSec: number) => {
-    setActiveTab('audio');
     seekToTime(timestampSec);
+    setActiveTab('audio');
     resume();
   };
 
-  // Polish Chapter with Gemini Commute Rewriter
+  // Rewrite active chapter with Gemini AI Flash Audio Polish
   const handleRewriteWithGemini = async (segmentIndex: number) => {
     if (!activeDocument || !activeDocument.segments[segmentIndex]) return;
+
+    const segment = activeDocument.segments[segmentIndex];
     setIsRewriting(true);
 
     try {
-      const seg = activeDocument.segments[segmentIndex];
-      const polishedNarrative = await GeminiService.rewriteForCommute(
-        seg.title,
-        seg.originalContent,
-        settings.geminiApiKey
+      const apiKey = settings.geminiApiKey || localStorage.getItem('GEMINI_API_KEY') || undefined;
+
+      const enhancedScript = await GeminiService.rewriteForCommute(
+        segment.originalContent,
+        activeDocument.title,
+        apiKey
       );
 
+      // Update segment in IndexedDB
       const updatedSegments = [...activeDocument.segments];
       updatedSegments[segmentIndex] = {
-        ...seg,
-        synthesizedAudioText: polishedNarrative,
+        ...segment,
+        synthesizedAudioText: enhancedScript,
       };
 
-      await db.documents.update(activeDocument.id, {
+      const updatedDoc: LectureDocument = {
+        ...activeDocument,
         segments: updatedSegments,
-      });
+      };
 
-      // If currently playing this segment, restart with polished narrative
-      if (playerState.currentSegmentIndex === segmentIndex && playerState.isPlaying) {
-        playSegment(segmentIndex, playerState.currentTime);
-      }
-    } catch (e: any) {
-      alert(`Gemini rewrite error: ${e.message}`);
+      await db.documents.put(updatedDoc);
+    } catch (err: any) {
+      console.error('Audio polish failed:', err);
+      alert(`Audio enhancement note: ${err.message || 'Check Gemini API Key in Settings'}`);
     } finally {
       setIsRewriting(false);
     }
@@ -154,9 +160,7 @@ export function App() {
 
   return (
     <>
-      {isLoading && (
-        <LoadingScreen onLoaded={() => setIsLoading(false)} minDurationMs={1800} />
-      )}
+      {isLoading && <LoadingScreen onLoaded={() => setIsLoading(false)} />}
 
       <MobileContainer>
         {/* Top HUD Header */}
@@ -224,9 +228,11 @@ export function App() {
             transcript={transcript}
             audioLevel={audioLevel}
             capturedTimestamp={capturedTimestamp}
+            errorMessage={errorMessage}
             onStartDictation={startDictation}
             onFinalizeDictation={finalizeDictation}
             onCancelDictation={cancelDictation}
+            onTranscriptChange={setTranscript}
             onJumpToAudio={handleJumpToAudio}
             onDeleteNote={handleDeleteNote}
           />
@@ -241,7 +247,23 @@ export function App() {
           />
         )}
 
-        {/* Tactile Commute 4-Tab Bottom Navigation Bar (No Badges) */}
+        {/* Global Voice Dictation Floating Sheet (Visible when recording or on Notebook tab) */}
+        {(isRecording || isProcessing || activeTab === 'notebook') && (
+          <FloatingMicButton
+            isRecording={isRecording}
+            isProcessing={isProcessing}
+            transcript={transcript}
+            audioLevel={audioLevel}
+            capturedTimestamp={capturedTimestamp}
+            errorMessage={errorMessage}
+            onStartDictation={startDictation}
+            onFinalizeDictation={finalizeDictation}
+            onCancelDictation={cancelDictation}
+            onTranscriptChange={setTranscript}
+          />
+        )}
+
+        {/* Tactile Commute 4-Tab Bottom Navigation Bar */}
         <BottomNav
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -258,5 +280,3 @@ export function App() {
     </>
   );
 }
-
-export default App;

@@ -16,12 +16,16 @@ export function useVoiceDictation(
   const [audioLevel, setAudioLevel] = useState(0);
   const [capturedTimestamp, setCapturedTimestamp] = useState('00:00');
   const [capturedSeconds, setCapturedSeconds] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const activeDocRef = useRef(activeDocument);
   activeDocRef.current = activeDocument;
 
   const lectureTimeRef = useRef(currentLectureTimeSec);
   lectureTimeRef.current = currentLectureTimeSec;
+
+  const transcriptRef = useRef(transcript);
+  transcriptRef.current = transcript;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -30,89 +34,92 @@ export function useVoiceDictation(
   };
 
   const startDictation = useCallback(async () => {
-    // 1. Mark timestamp at the moment user presses Drop Note
     const currentSecs = lectureTimeRef.current;
     setCapturedSeconds(currentSecs);
     setCapturedTimestamp(formatTime(currentSecs));
     setTranscript('');
+    setErrorMessage(null);
     setIsRecording(true);
 
-    // 2. Trigger audio pause callback
+    // Pause audio lecture playback
     onDictationStart?.();
 
-    // 3. Start speech recognition & microphone visualizer
+    // Start speech recognition
     await VoiceRecognitionService.startListening({
-      onTranscriptChange: (currentText, isFinal) => {
+      onTranscriptChange: (currentText) => {
         setTranscript(currentText);
-        if (isFinal) {
-          // Auto complete if silence was detected
-          finalizeDictation(currentText);
-        }
       },
       onAudioLevelChange: (lvl) => {
         setAudioLevel(lvl);
       },
       onStateChange: (state) => {
-        if (state === 'idle' && isRecording) {
-          // Stopped by browser
+        if (state === 'error') {
+          // Keep recording overlay open so user can type or retry
         }
       },
       onError: (err) => {
-        console.warn('Dictation error:', err);
-      }
+        console.warn('Dictation warning:', err);
+        setErrorMessage(err);
+      },
     });
-  }, [onDictationStart, isRecording]);
+  }, [onDictationStart]);
 
-  const finalizeDictation = useCallback(async (manualText?: string) => {
-    const textToProcess = manualText || transcript || VoiceRecognitionService.stopListening();
-    VoiceRecognitionService.stopListening();
-    setIsRecording(false);
+  const finalizeDictation = useCallback(
+    async (manualText?: string) => {
+      const recorded = VoiceRecognitionService.stopListening();
+      const textToProcess = (manualText ?? (transcriptRef.current || recorded)).trim();
 
-    if (!textToProcess || textToProcess.trim().length === 0) {
-      onDictationEnd?.();
-      return;
-    }
+      setIsRecording(false);
+      setErrorMessage(null);
 
-    setIsProcessing(true);
+      if (!textToProcess) {
+        onDictationEnd?.();
+        return;
+      }
 
-    try {
-      const doc = activeDocRef.current;
-      const context = doc ? `${doc.title}` : 'General Lecture';
+      setIsProcessing(true);
 
-      // 4. Synthesize with Gemini
-      const { synthesizedText, category } = await GeminiService.synthesizeCommuteNote(
-        textToProcess,
-        context
-      );
+      try {
+        const doc = activeDocRef.current;
+        const context = doc ? `${doc.title}` : 'General Lecture';
 
-      // 5. Save to Dexie DB
-      const newNote: CommuteNote = {
-        id: `note-${Date.now()}`,
-        documentId: doc?.id || 'general-commute',
-        documentTitle: doc?.title || 'Commute Quick Capture',
-        timestampSeconds: capturedSeconds,
-        timestampFormatted: capturedTimestamp,
-        rawTranscription: textToProcess,
-        synthesizedContent: synthesizedText,
-        category,
-        createdAt: Date.now()
-      };
+        // 1. Synthesize and categorize note
+        const { synthesizedText, category } = await GeminiService.synthesizeCommuteNote(
+          textToProcess,
+          context
+        );
 
-      await db.notes.add(newNote);
-    } catch (err) {
-      console.error('Failed to save commute note:', err);
-    } finally {
-      setIsProcessing(false);
-      setTranscript('');
-      onDictationEnd?.();
-    }
-  }, [transcript, capturedSeconds, capturedTimestamp, onDictationEnd]);
+        // 2. Save to Dexie IndexedDB
+        const newNote: CommuteNote = {
+          id: `note-${Date.now()}`,
+          documentId: doc?.id || 'general-commute',
+          documentTitle: doc?.title || 'Commute Quick Capture',
+          timestampSeconds: capturedSeconds,
+          timestampFormatted: capturedTimestamp,
+          rawTranscription: textToProcess,
+          synthesizedContent: synthesizedText,
+          category,
+          createdAt: Date.now(),
+        };
+
+        await db.notes.add(newNote);
+      } catch (err) {
+        console.error('Failed to save commute note:', err);
+      } finally {
+        setIsProcessing(false);
+        setTranscript('');
+        onDictationEnd?.();
+      }
+    },
+    [capturedSeconds, capturedTimestamp, onDictationEnd]
+  );
 
   const cancelDictation = useCallback(() => {
     VoiceRecognitionService.stopListening();
     setIsRecording(false);
     setIsProcessing(false);
     setTranscript('');
+    setErrorMessage(null);
     onDictationEnd?.();
   }, [onDictationEnd]);
 
@@ -120,11 +127,12 @@ export function useVoiceDictation(
     isRecording,
     isProcessing,
     transcript,
+    setTranscript,
     audioLevel,
     capturedTimestamp,
+    errorMessage,
     startDictation,
     finalizeDictation,
     cancelDictation,
-    setTranscript
   };
 }

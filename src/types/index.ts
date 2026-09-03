@@ -69,3 +69,15 @@ export interface AppSettings {
   hapticFeedbackEnabled: boolean;
   commuteSafeMode: boolean;
 }
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  geminiApiKey: '',
+  googleCloudTtsKey: '',
+  selectedVoiceURI: '',
+  cloudVoiceName: 'en-US-Journey-F',
+  autoResumeAfterNote: true,
+  speechPitch: 1.0,
+  speechRate: 1.0,
+  hapticFeedbackEnabled: true,
+  commuteSafeMode: true,
+};
