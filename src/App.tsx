@@ -19,7 +19,7 @@ export default function App() {
   const [isPwaModalOpen, setIsPwaModalOpen] = useState(false);
 
   // PWA Install Hook for Mobile Browsers
-  const { isInstallable, isInstalled, isIOS, triggerInstall } = usePwaInstall();
+  const { isInstallable, isInstalled, isIOS, isAndroid, isSecureContext, triggerInstall } = usePwaInstall();
 
   const [settings, setSettings] = useState<AppSettings>(() => {
     if (typeof localStorage !== 'undefined') {
@@ -158,8 +158,10 @@ export default function App() {
         isOpen={isPwaModalOpen}
         onClose={() => setIsPwaModalOpen(false)}
         isIOS={isIOS}
+        isAndroid={isAndroid}
         isInstallable={isInstallable}
         isInstalled={isInstalled}
+        isSecureContext={isSecureContext}
         onInstall={triggerInstall}
       />
     </MobileContainer>

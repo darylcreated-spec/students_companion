@@ -5,6 +5,8 @@ export function usePwaInstall() {
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isSecureContext, setIsSecureContext] = useState(true);
 
   useEffect(() => {
     // 1. Check if already running in standalone PWA mode
@@ -19,16 +21,20 @@ export function usePwaInstall() {
 
     checkStandalone();
 
-    // 2. Check if iOS device
-    const checkIOS = () => {
+    // 2. Check device OS
+    const checkDevice = () => {
       const userAgent = window.navigator.userAgent.toLowerCase();
       const isApple =
         /iphone|ipad|ipod/.test(userAgent) ||
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isGoogleAndroid = /android/.test(userAgent);
+
       setIsIOS(isApple);
+      setIsAndroid(isGoogleAndroid);
+      setIsSecureContext(typeof window !== 'undefined' ? window.isSecureContext : true);
     };
 
-    checkIOS();
+    checkDevice();
 
     // 3. Listen for Chromium/Android beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -60,8 +66,8 @@ export function usePwaInstall() {
 
     try {
       deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
+      const choice = await deferredPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted') {
         setIsInstalled(true);
         setIsInstallable(false);
         setDeferredPrompt(null);
@@ -77,6 +83,8 @@ export function usePwaInstall() {
     isInstallable,
     isInstalled,
     isIOS,
+    isAndroid,
+    isSecureContext,
     triggerInstall,
   };
 }
