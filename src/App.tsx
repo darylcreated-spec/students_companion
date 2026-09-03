@@ -9,10 +9,12 @@ import { ReaderMode } from './screens/ReaderMode';
 import { TranscriberMode } from './screens/TranscriberMode';
 import { ApiKeyModal } from './components/common/ApiKeyModal';
 import { PwaInstallModal } from './components/common/PwaInstallModal';
+import { LoadingScreen } from './components/common/LoadingScreen';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { usePwaInstall } from './hooks/usePwaInstall';
 
 export default function App() {
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<NavTab>('reader');
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -87,7 +89,9 @@ export default function App() {
   };
 
   return (
-    <MobileContainer>
+    <>
+      {isLoading && <LoadingScreen onLoaded={() => setIsLoading(false)} />}
+      <MobileContainer>
       {/* Top Header with PWA Mobile Install Option & Settings */}
       <TopHeader
         title={
@@ -164,6 +168,7 @@ export default function App() {
         isSecureContext={isSecureContext}
         onInstall={triggerInstall}
       />
-    </MobileContainer>
+      </MobileContainer>
+    </>
   );
 }
