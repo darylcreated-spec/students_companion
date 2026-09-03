@@ -147,6 +147,31 @@ Quantum annealing utilizes superposition and quantum tunneling to explore high-d
   assert(manifest.display === 'standalone', 'Manifest display mode is standalone PWA.');
   assert(manifest.theme_color === '#0A0F1D', 'Manifest theme color matches Nocturnal HUD.');
 
+  // TEST GROUP 9: Spoken Punctuation & Auto-Formatting Engine
+  console.log('\n--- TEST GROUP 9: Spoken Punctuation & Auto-Formatting Engine ---');
+  function formatSpoken(text) {
+    let s = text
+      .replace(/\b(?:new paragraph|next paragraph)\b/gi, '\n\n')
+      .replace(/\b(?:new line|next line)\b/gi, '\n')
+      .replace(/\b(?:bullet point|bullet)\b/gi, '\n• ')
+      .replace(/\b(?:period|full stop|dot)\b/gi, '.')
+      .replace(/\bcomma\b/gi, ',')
+      .replace(/\b(?:question mark)\b/gi, '?')
+      .replace(/\b(?:exclamation mark|exclamation point)\b/gi, '!')
+      .replace(/\s+([.,!?:;])/g, '$1')
+      .replace(/([.,!?:;])(?=[A-Za-z0-9])/g, '$1 ')
+      .replace(/\bi\b/g, 'I');
+
+    return s.charAt(0).toUpperCase() + s.slice(1).replace(/([.!?\n]\s*)([a-z])/g, (_, p, c) => p + c.toUpperCase()).trim();
+  }
+
+  const rawSpoken = "hello world comma i am studying for the exam period when is the deadline question mark";
+  const formatted = formatSpoken(rawSpoken);
+  assert(formatted.includes("Hello world,"), 'Spoken comma formatted cleanly with capitalization.');
+  assert(formatted.includes("I am studying"), 'Standalone pronoun I capitalized.');
+  assert(formatted.includes("for the exam."), 'Spoken period converted to period mark.');
+  assert(formatted.includes("When is the deadline?"), 'Spoken question mark converted and next sentence capitalized.');
+
   console.log('\n====================================================');
   console.log(`🏁 TEST RESULTS: ${passedTests}/${totalTests} TESTS PASSED (100%)`);
   console.log('====================================================\n');

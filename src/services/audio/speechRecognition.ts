@@ -1,3 +1,5 @@
+import { PunctuationService } from './punctuationService';
+
 export interface VoiceCaptureCallbacks {
   onTranscriptChange: (transcript: string, isFinal: boolean) => void;
   onAudioLevelChange: (level: number) => void;
@@ -141,8 +143,9 @@ export class VoiceRecognitionService {
         this.accumulatedTranscript = (this.accumulatedTranscript + ' ' + newFinal).trim();
       }
 
-      const fullCurrentText = (this.accumulatedTranscript + ' ' + interimText).trim();
-      callbacks.onTranscriptChange(fullCurrentText, false);
+      const rawCurrentText = (this.accumulatedTranscript + ' ' + interimText).trim();
+      const punctuatedText = PunctuationService.formatSpokenPunctuation(rawCurrentText);
+      callbacks.onTranscriptChange(punctuatedText, false);
 
       // Boost waveform audio feedback on speech activity
       callbacks.onAudioLevelChange(0.75 + Math.random() * 0.25);
@@ -258,6 +261,6 @@ export class VoiceRecognitionService {
       this.animFrameId = null;
     }
 
-    return this.accumulatedTranscript;
+    return PunctuationService.formatSpokenPunctuation(this.accumulatedTranscript);
   }
 }
