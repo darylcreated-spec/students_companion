@@ -12,7 +12,7 @@ interface PlayerControlsProps {
   onPreviousChapter: () => void;
   onNextChapter: () => void;
   onRateChange: (rate: PlaybackRate) => void;
-  onDropNote: () => void;
+  onDropNote?: () => void;
 }
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
@@ -110,26 +110,28 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         </button>
       </div>
 
-      {/* Massive Single-Tap "Drop Note" Commute Bookmark Trigger */}
-      <div className="w-full pt-2">
-        <button
-          onClick={onDropNote}
-          className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-400/50 hover:border-amber-400 text-amber-300 flex items-center justify-center space-x-3 shadow-[0_0_20px_rgba(251,191,36,0.25)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] active:scale-98 transition-all group"
-        >
-          <div className="w-8 h-8 rounded-xl bg-amber-400 text-obsidian-950 flex items-center justify-center shadow-[0_0_10px_rgba(251,191,36,0.8)] group-hover:scale-110 transition-transform">
-            <Mic className="w-4 h-4 animate-pulse" />
-          </div>
-          <div className="text-left">
-            <div className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-              <span>DROP NOTE / BOOKMARK</span>
-              <Bookmark className="w-3.5 h-3.5 text-amber-400 fill-current" />
+      {/* Optional "Drop Note" Commute Bookmark Trigger */}
+      {onDropNote && (
+        <div className="w-full pt-2">
+          <button
+            onClick={onDropNote}
+            className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-400/50 hover:border-amber-400 text-amber-300 flex items-center justify-center space-x-3 shadow-[0_0_20px_rgba(251,191,36,0.25)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] active:scale-98 transition-all group"
+          >
+            <div className="w-8 h-8 rounded-xl bg-amber-400 text-obsidian-950 flex items-center justify-center shadow-[0_0_10px_rgba(251,191,36,0.8)] group-hover:scale-110 transition-transform">
+              <Mic className="w-4 h-4 animate-pulse" />
             </div>
-            <p className="text-[10px] text-amber-300/80 font-mono">
-              Single-tap voice capture with lecture timestamp
-            </p>
-          </div>
-        </button>
-      </div>
+            <div className="text-left">
+              <div className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+                <span>DROP NOTE / BOOKMARK</span>
+                <Bookmark className="w-3.5 h-3.5 text-amber-400 fill-current" />
+              </div>
+              <p className="text-[10px] text-amber-300/80 font-mono">
+                Single-tap voice capture with lecture timestamp
+              </p>
+            </div>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

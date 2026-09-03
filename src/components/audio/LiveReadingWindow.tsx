@@ -11,6 +11,7 @@ interface LiveReadingWindowProps {
   duration: number;
   onSentenceClick?: (sentenceIndex: number, totalSentences: number) => void;
   onOpenChapterPicker?: () => void;
+  fillHeight?: boolean;
 }
 
 export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
@@ -23,6 +24,7 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
   duration,
   onSentenceClick,
   onOpenChapterPicker,
+  fillHeight = false,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [fontSize, setFontSize] = useState<'sm' | 'md' | 'lg'>('md');
@@ -64,7 +66,7 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
   };
 
   return (
-    <div className="w-full rounded-3xl bg-[#0E1426]/90 border border-cyan-400/25 shadow-xl backdrop-blur-xl flex flex-col overflow-hidden transition-all">
+    <div className={`w-full rounded-2xl bg-[#0E1426]/90 border border-cyan-400/25 shadow-xl backdrop-blur-xl flex flex-col overflow-hidden transition-all ${fillHeight ? 'flex-1 min-h-0' : ''}`}>
       {/* Header bar of Live Reading Window */}
       <div className="px-4 py-2.5 bg-slate-900/90 border-b border-white/5 flex items-center justify-between text-xs font-mono">
         <div className="flex items-center space-x-2">
@@ -126,7 +128,7 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
       {/* Reading Text Body (Interactive Tap-To-Read from any sentence) */}
       <div
         ref={containerRef}
-        className={`p-3.5 max-h-[130px] sm:max-h-[180px] overflow-y-auto overscroll-contain space-y-2 font-sora ${getFontSizeClass()}`}
+        className={`p-3.5 overflow-y-auto overscroll-contain space-y-2 font-sora ${getFontSizeClass()} ${fillHeight ? 'flex-1 min-h-0' : 'max-h-[130px] sm:max-h-[180px]'}`}
       >
         {sentences.length > 0 ? (
           sentences.map((sentence, idx) => {
