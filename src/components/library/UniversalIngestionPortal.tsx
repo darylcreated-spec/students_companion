@@ -5,7 +5,7 @@ import {
   Camera,
   Cloud,
   Link,
-  Loader2,
+  Headphones,
   Check,
   Play,
   Clock,
@@ -151,17 +151,28 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
 
       {/* State A: Loading / Processing Progress */}
       {isProcessing && (
-        <div className="py-8 flex flex-col items-center justify-center space-y-3 text-center">
-          <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
+        <div className="py-8 flex flex-col items-center justify-center space-y-4 text-center">
+          {/* Branded Themed Hero Icon Container */}
+          <div className="relative">
+            <div className="w-16 h-16 rounded-2xl bg-[#0A0F1D] border border-cyan-400/40 flex items-center justify-center shadow-[0_0_25px_rgba(34,211,238,0.35)] animate-pulse">
+              <Headphones className="w-8 h-8 text-cyan-400" />
+            </div>
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-400"></span>
+            </span>
+          </div>
+
           <div>
             <p className="text-sm font-bold text-slate-100">{progressMsg}</p>
             <p className="text-xs text-cyan-400 font-mono mt-0.5">
-              Recognizing chapter structure & sanitizing noise...
+              Structuring audio chapters & sanitizing formulas...
             </p>
           </div>
-          <div className="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+
+          <div className="w-52 h-1.5 bg-slate-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-cyan-400 transition-all duration-300 rounded-full"
+              className="h-full bg-gradient-to-r from-cyan-400 to-amber-400 transition-all duration-300 rounded-full"
               style={{ width: `${progressPercent}%` }}
             />
           </div>

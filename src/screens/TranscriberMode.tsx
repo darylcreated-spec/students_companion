@@ -10,7 +10,6 @@ import {
   Smartphone,
   Sparkles,
   HelpCircle,
-  Loader2,
 } from 'lucide-react';
 import { VoiceRecognitionService } from '../services/audio/speechRecognition';
 import { PunctuationService } from '../services/audio/punctuationService';
@@ -282,7 +281,7 @@ export const TranscriberMode: React.FC = () => {
               >
                 {isPunctuating ? (
                   <>
-                    <Loader2 className="w-3 h-3 text-cyan-400 animate-spin" />
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
                     <span>Punctuating...</span>
                   </>
                 ) : punctuationSuccess ? (
