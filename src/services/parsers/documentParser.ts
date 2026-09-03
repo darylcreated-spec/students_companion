@@ -108,27 +108,20 @@ export async function extractDocumentText(
 
   onProgress?.(70, 'Sanitizing text and removing noise...');
 
-  // 1. Filter out TOC, Index, Copyright, Blank pages, and Picture legends
+  // Ingest all sections completely with zero content restrictions
   const cleanItems: { title?: string; text: string; pageOrSlide?: number }[] = [];
   let skippedSectionsCount = 0;
 
   for (const item of rawItems) {
-    const { skip } = ContentSanitizer.shouldSkipSection(item.title, item.text, options);
-    if (skip) {
-      skippedSectionsCount++;
-      continue;
-    }
+    const text = item.text.trim();
+    if (!text) continue;
 
-    const sanitizedText = ContentSanitizer.cleanContentForAudio(item.text, options);
-    if (sanitizedText.split(/\s+/).filter(Boolean).length >= 8) {
-      cleanItems.push({
-        title: item.title,
-        text: sanitizedText,
-        pageOrSlide: item.pageOrSlide,
-      });
-    } else {
-      skippedSectionsCount++;
-    }
+    const sanitizedText = ContentSanitizer.cleanContentForAudio(text, options);
+    cleanItems.push({
+      title: item.title,
+      text: sanitizedText || text,
+      pageOrSlide: item.pageOrSlide,
+    });
   }
 
   onProgress?.(85, 'Dividing into structured audio chapters...');

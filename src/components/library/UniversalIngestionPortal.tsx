@@ -132,11 +132,11 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
         </div>
       </div>
 
-      {/* Hidden File Inputs */}
+      {/* Hidden File Inputs - All Formats Allowed */}
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg,.webp"
+        accept="*/*"
         className="hidden"
         onChange={(e) => handleFileUpload(e.target.files)}
       />
