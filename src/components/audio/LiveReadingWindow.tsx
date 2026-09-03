@@ -126,7 +126,7 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
       {/* Reading Text Body (Interactive Tap-To-Read from any sentence) */}
       <div
         ref={containerRef}
-        className={`p-4 max-h-[165px] sm:max-h-[210px] overflow-y-auto overscroll-contain space-y-2.5 font-sora ${getFontSizeClass()}`}
+        className={`p-3.5 max-h-[130px] sm:max-h-[180px] overflow-y-auto overscroll-contain space-y-2 font-sora ${getFontSizeClass()}`}
       >
         {sentences.length > 0 ? (
           sentences.map((sentence, idx) => {

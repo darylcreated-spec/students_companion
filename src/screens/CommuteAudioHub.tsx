@@ -79,9 +79,9 @@ export const CommuteAudioHub: React.FC<CommuteAudioHubProps> = ({
     'Preparing reading text...';
 
   return (
-    <div className="flex-1 flex flex-col space-y-3.5 p-4 pb-6 overflow-y-auto overscroll-contain">
+    <div className="flex-1 flex flex-col space-y-2.5 p-3.5 pb-4 overflow-y-auto overscroll-contain">
       {/* Top Glass Card: Lecture & Chapter Metadata + Start Point Selector */}
-      <div className="p-3.5 rounded-3xl bg-[#0E1426]/80 border border-white/10 shadow-lg backdrop-blur-xl flex flex-col space-y-2 relative shrink-0">
+      <div className="p-3 rounded-2xl bg-[#0E1426]/80 border border-white/10 shadow-lg backdrop-blur-xl flex flex-col space-y-1.5 relative shrink-0">
         <div className="flex items-center justify-between">
           {/* Chapter / Start Point Picker Button */}
           <button
