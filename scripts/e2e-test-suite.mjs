@@ -144,6 +144,7 @@ Quantum annealing utilizes superposition and quantum tunneling to explore high-d
 
   const manifest = JSON.parse(fs.readFileSync('public/manifest.json', 'utf8'));
   assert(manifest.name === "The Student's Companion", 'Manifest name correctly set.');
+  assert(manifest.short_name === "Student's Companion", 'Manifest short_name set to Student\'s Companion for Android launcher.');
   assert(manifest.display === 'standalone', 'Manifest display mode is standalone PWA.');
   assert(manifest.theme_color === '#0A0F1D', 'Manifest theme color matches Nocturnal HUD.');
 

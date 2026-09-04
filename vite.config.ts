@@ -14,7 +14,7 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'masked-icon.svg', 'icon-192.png', 'icon-512.png'],
       manifest: {
         name: "The Student's Companion",
-        short_name: "Companion",
+        short_name: "Student's Companion",
         description: "Hands-Free Commute Audio Lecture Companion & Real-Time Note Taker",
         theme_color: "#0A0F1D",
         background_color: "#0A0F1D",
