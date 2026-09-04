@@ -50,9 +50,13 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
 
       {/* Center Hero Icon & Title */}
       <div className="flex flex-col items-center text-center space-y-6 max-w-xs">
-        {/* Glass Icon Container */}
-        <div className="w-24 h-24 rounded-3xl bg-[#0E1426] border border-cyan-400/40 flex items-center justify-center shadow-[0_0_35px_rgba(34,211,238,0.3)]">
-          <Headphones className="w-12 h-12 text-cyan-400" />
+        {/* Branded Owl Icon Container */}
+        <div className="w-24 h-24 rounded-3xl overflow-hidden border border-cyan-400/40 shadow-[0_0_35px_rgba(34,211,238,0.35)] bg-[#070B14]">
+          <img
+            src="/icon-192.png"
+            alt="The Student's Companion"
+            className="w-full h-full object-cover"
+          />
         </div>
 
         <div>
