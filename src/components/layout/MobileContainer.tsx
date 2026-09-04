@@ -23,7 +23,7 @@ export const MobileContainer: React.FC<MobileContainerProps> = ({ children, oled
     >
       {/* Universal Responsive Container */}
       <div
-        className={`relative w-full h-[100dvh] max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl sm:h-[94vh] sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 ${
+        className={`relative w-full h-[100dvh] max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl sm:h-[94vh] sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 ${
           oledMode
             ? 'bg-[#000000] sm:border sm:border-zinc-800'
             : 'bg-[#0A0F1D] sm:border sm:border-slate-800/80'

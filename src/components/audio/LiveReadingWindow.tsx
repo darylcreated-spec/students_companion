@@ -12,7 +12,9 @@ import {
   X,
   Type,
   Sun,
-  Moon
+  Moon,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { TextHighlight, HighlightColor, EReaderTheme } from '../../types';
 import { HapticFeedback } from '../../services/device/deviceDetector';
@@ -33,6 +35,8 @@ interface LiveReadingWindowProps {
   onToggleHighlight?: (sentenceIndex: number, sentenceText: string, color: HighlightColor) => void;
   onOpenDictionary?: (word: string) => void;
   initialViewMode?: 'teleprompter' | 'ebook';
+  isFocusMode?: boolean;
+  onToggleFocusMode?: () => void;
 }
 
 export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
@@ -49,7 +53,9 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
   highlights = [],
   onToggleHighlight,
   onOpenDictionary,
-  initialViewMode = 'ebook'
+  initialViewMode = 'ebook',
+  isFocusMode = false,
+  onToggleFocusMode,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [viewMode, setViewMode] = useState<'teleprompter' | 'ebook'>(initialViewMode);
@@ -321,6 +327,24 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
               A+
             </button>
           </div>
+
+          {/* Fullscreen Focus Mode Toggle */}
+          {onToggleFocusMode && (
+            <button
+              onClick={() => {
+                HapticFeedback.trigger('light');
+                onToggleFocusMode();
+              }}
+              className={`p-1 rounded text-[10px] font-bold border transition-colors ${
+                isFocusMode
+                  ? 'bg-cyan-400 text-obsidian-950 border-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.4)]'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+              }`}
+              title={isFocusMode ? 'Exit Focus Mode' : 'Focus Mode (Maximize Reading Viewport)'}
+            >
+              {isFocusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            </button>
+          )}
         </div>
       </div>
 
