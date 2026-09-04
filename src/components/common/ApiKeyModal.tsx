@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Volume2, Check, Save, Play, Sliders, Mic, Globe, Key, Cpu, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Volume2, Check, Save, Play, Sliders, Mic, Globe, Key, Cpu, ChevronDown, ChevronUp } from 'lucide-react';
 import { AppSettings } from '../../types';
 import { TTSEngine } from '../../services/audio/ttsEngine';
 import { DeviceDetector, BrowserInfo } from '../../services/device/deviceDetector';
@@ -223,8 +223,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
               <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
               <span>VOICE PERSONA</span>
             </label>
-            <span className="text-[10px] font-mono text-amber-400 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" />
+            <span className="text-[10px] font-mono text-cyan-400 flex items-center gap-1">
+              <Check className="w-3 h-3" />
               <span>Natural Audio</span>
             </span>
           </div>

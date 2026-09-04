@@ -8,7 +8,6 @@ import {
   Highlighter,
   BookMarked,
   Search,
-  Sparkles,
   Check,
   X,
   Type,

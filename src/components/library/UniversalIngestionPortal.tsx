@@ -10,7 +10,6 @@ import {
   Play,
   Clock,
   Layers,
-  Sparkles,
   ArrowRight,
   FolderOpen,
   Plus,
@@ -466,7 +465,7 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
                       onClick={handleCompileBatchOcr}
                       className="flex-[1.4] py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-amber-400 text-obsidian-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(34,211,238,0.4)] active:scale-95 transition-all"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
+                      <Layers className="w-3.5 h-3.5" />
                       <span>Compile {pageQueue.length} Pages</span>
                     </button>
                   </div>

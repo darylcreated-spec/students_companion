@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Volume2, Sparkles, Highlighter, BookOpen, Check, ExternalLink } from 'lucide-react';
+import { X, Volume2, Highlighter, BookOpen, Check, ExternalLink } from 'lucide-react';
 import { WordDefinition, HighlightColor } from '../../types';
 import { DictionaryService } from '../../services/education/dictionaryService';
 
@@ -68,11 +68,17 @@ export const WordDefinitionModal: React.FC<WordDefinitionModalProps> = ({
           </button>
         </div>
 
-        {/* Loading State */}
+        {/* Loading State: Themed Acoustic Wave Indicator */}
         {isLoading && (
-          <div className="py-12 flex flex-col items-center justify-center space-y-3">
-            <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-slate-400">Looking up definition...</p>
+          <div className="py-12 flex flex-col items-center justify-center space-y-4">
+            <div className="flex items-center justify-center gap-1.5 h-8">
+              <div className="w-1.5 h-4 bg-indigo-500 rounded-full animate-pulse" />
+              <div className="w-1.5 h-7 bg-indigo-400 rounded-full animate-pulse delay-75" />
+              <div className="w-1.5 h-9 bg-indigo-300 rounded-full animate-pulse delay-150" />
+              <div className="w-1.5 h-6 bg-indigo-400 rounded-full animate-pulse delay-75" />
+              <div className="w-1.5 h-3 bg-indigo-500 rounded-full animate-pulse" />
+            </div>
+            <p className="text-xs font-mono text-indigo-300">Searching companion dictionary...</p>
           </div>
         )}
 

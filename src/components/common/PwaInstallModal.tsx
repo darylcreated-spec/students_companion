@@ -10,7 +10,6 @@ import {
   Zap,
   MoreVertical,
   Layers,
-  Sparkles,
   Info
 } from 'lucide-react';
 

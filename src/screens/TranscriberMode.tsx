@@ -8,7 +8,8 @@ import {
   AlertCircle,
   Check,
   Smartphone,
-  Sparkles,
+  CheckCheck,
+  Layers,
   HelpCircle,
 } from 'lucide-react';
 import { VoiceRecognitionService } from '../services/audio/speechRecognition';
@@ -231,7 +232,7 @@ export const TranscriberMode: React.FC = () => {
         <div className="mb-2 p-3 rounded-2xl bg-cyan-950/40 border border-cyan-400/30 text-cyan-200 text-xs font-sora shrink-0 space-y-1.5 animate-in fade-in duration-150">
           <div className="flex items-center justify-between font-bold text-cyan-300">
             <span className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <Mic className="w-3.5 h-3.5 text-cyan-400" />
               <span>Spoken Punctuation & Voice Commands</span>
             </span>
             <button
@@ -313,7 +314,7 @@ export const TranscriberMode: React.FC = () => {
               >
                 {isPunctuating ? (
                   <>
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
+                    <FileText className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
                     <span>Punctuating...</span>
                   </>
                 ) : punctuationSuccess ? (
@@ -323,7 +324,7 @@ export const TranscriberMode: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-3 h-3 text-cyan-400" />
+                    <CheckCheck className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Auto-Punctuate</span>
                   </>
                 )}
@@ -431,7 +432,7 @@ export const TranscriberMode: React.FC = () => {
             }`}
             title="Export to Anki Flashcards Deck"
           >
-            {exportedFormat === 'anki' ? <Check className="w-3.5 h-3.5 text-amber-400" /> : <Sparkles className="w-3.5 h-3.5 text-amber-400" />}
+            {exportedFormat === 'anki' ? <Check className="w-3.5 h-3.5 text-amber-400" /> : <Layers className="w-3.5 h-3.5 text-amber-400" />}
             <span>ANKI</span>
           </button>
         </div>

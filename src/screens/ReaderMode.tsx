@@ -30,7 +30,6 @@ import {
   FolderOpen,
   Play,
   HelpCircle,
-  Sparkles,
   RotateCcw,
   Volume2,
   Highlighter,
@@ -351,7 +350,7 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
             }`}
             title="Toggle Commute Audio Quiz Mode"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <HelpCircle className="w-3.5 h-3.5" />
             <span>{isQuizMode ? 'Exit Quiz' : 'Audio Quiz'}</span>
           </button>
 
@@ -479,7 +478,7 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
             <div className="flex items-center justify-between border-b border-white/5 pb-2.5 shrink-0">
               <div className="flex items-center space-x-2">
                 <div className="p-1.5 rounded-lg bg-amber-400 text-obsidian-950 font-bold">
-                  <Sparkles className="w-4 h-4" />
+                  <HelpCircle className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-white uppercase tracking-wider">
