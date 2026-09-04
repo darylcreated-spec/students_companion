@@ -185,15 +185,15 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
         fillHeight ? 'flex-1 min-h-0' : ''
       }`}
     >
-      {/* Reader Mode Bar */}
+      {/* Reader Mode Bar (Responsive horizontally scrollable on mobile) */}
       <div
-        className={`px-3 sm:px-4 py-2 flex items-center justify-between border-b text-xs shrink-0 ${
+        className={`px-2.5 sm:px-4 py-2 flex items-center justify-between border-b text-xs shrink-0 overflow-x-auto no-scrollbar gap-2 ${
           eBookTheme === 'sepia'
             ? 'bg-[#F2E6C8] border-[#DECBA6] text-[#4A3D2F]'
             : 'bg-slate-900/90 border-white/5 text-slate-300'
         }`}
       >
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 shrink-0">
           {/* Toggle View Mode: E-Book vs Teleprompter */}
           <div className="flex items-center rounded-lg bg-black/25 p-0.5 border border-white/10 text-[11px] font-mono">
             <button
@@ -232,7 +232,7 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
         </div>
 
         {/* E-Reader Customization Tools */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2">
+        <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
           {/* Quick Dictionary Search Button */}
           {onOpenDictionary && (
             <button

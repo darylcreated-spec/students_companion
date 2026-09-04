@@ -311,11 +311,11 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
 
   return (
     <div className="flex-1 flex flex-col p-3 pb-2 overflow-hidden select-none sm:select-auto">
-      {/* Consolidated Top Action Bar (Deduplicated with TopHeader) */}
+      {/* Consolidated Top Action Bar (Responsive Mobile Layout) */}
       {!isFocusMode && (
-        <div className="flex items-center justify-between gap-2 pb-2 shrink-0">
-          {/* Document Switcher or Chapter Pill */}
-          <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar min-w-0">
+        <div className="flex items-center justify-between gap-1.5 pb-2 shrink-0">
+          {/* Document Switcher or Chapter Pill (Hidden or truncated cleanly on narrow screens) */}
+          <div className="hidden sm:flex items-center space-x-1.5 overflow-x-auto no-scrollbar min-w-0">
             {documents.length > 1 ? (
               documents.map((doc) => {
                 const isSelected = activeDocumentId === doc.id;
@@ -341,21 +341,24 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
             )}
           </div>
 
-          {/* Action Buttons: Highlights, Audio Quiz, Add File */}
-          <div className="flex items-center space-x-1.5 shrink-0">
+          {/* Action Buttons: Highlights, Audio Quiz, Add File - Grid/Flex responsive layout */}
+          <div className="flex items-center justify-end space-x-1 sm:space-x-1.5 w-full sm:w-auto shrink-0">
             {/* Journey Highlights Audio Playback Button */}
             <button
               id="journey-highlights-btn"
               onClick={handlePlayJourneyHighlights}
-              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-mono flex items-center gap-1.5 border transition-all active:scale-95 ${
+              className={`px-2 py-1.5 rounded-xl text-[11px] font-mono flex items-center gap-1 border transition-all active:scale-95 ${
                 highlights.length > 0
                   ? 'bg-amber-400/20 text-amber-300 border-amber-400/60 shadow-[0_0_10px_rgba(251,191,36,0.3)] hover:bg-amber-400/30 font-medium'
                   : 'bg-slate-900 border-white/5 text-slate-400 hover:text-amber-300'
               }`}
               title="Listen to your highlighted points for your commute journey"
             >
-              <Highlighter className="w-3.5 h-3.5 text-amber-400" />
-              <span>Highlights ({highlights.length})</span>
+              <Highlighter className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>Highlights</span>
+              <span className="px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold">
+                {highlights.length}
+              </span>
             </button>
 
             {/* Mode Switcher: Read vs Audio Quiz */}
@@ -365,24 +368,25 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
                 HapticFeedback.trigger('light');
                 setIsQuizMode(!isQuizMode);
               }}
-              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-mono flex items-center gap-1.5 border transition-all active:scale-95 ${
+              className={`px-2 py-1.5 rounded-xl text-[11px] font-mono flex items-center gap-1 border transition-all active:scale-95 ${
                 isQuizMode
                   ? 'bg-amber-400 text-obsidian-950 font-bold border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.5)]'
                   : 'bg-slate-900 border-white/5 text-slate-300 hover:text-cyan-300'
               }`}
               title="Toggle Commute Audio Quiz Mode"
             >
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>{isQuizMode ? 'Exit Quiz' : 'Audio Quiz'}</span>
+              <HelpCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{isQuizMode ? 'Exit' : 'Quiz'}</span>
             </button>
 
+            {/* Add File / Import toggle button */}
             <button
               onClick={() => setIsImportOpen(!isImportOpen)}
               aria-label="Add or Import Document"
-              className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-950 border border-cyan-400/40 hover:border-cyan-400 text-[11px] font-mono text-cyan-300 transition-all flex items-center gap-1.5 shadow-[0_0_8px_rgba(34,211,238,0.2)] active:scale-95"
+              className="px-2 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-950 border border-cyan-400/40 hover:border-cyan-400 text-[11px] font-mono text-cyan-300 transition-all flex items-center gap-1 shadow-[0_0_8px_rgba(34,211,238,0.2)] active:scale-95 shrink-0"
             >
-              <Upload className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{isImportOpen ? 'Close' : '+ Add File'}</span>
+              <Upload className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span>{isImportOpen ? 'Close' : '+ File'}</span>
               {isImportOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
           </div>
