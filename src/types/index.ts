@@ -48,6 +48,7 @@ export interface AudioPlayerState {
   currentDocumentId: string | null;
   currentSegmentId: string | null;
   currentSegmentIndex: number;
+  currentSentenceIndex?: number;
   isPlaying: boolean;
   isPaused: boolean;
   currentTime: number; // Seconds within current segment

@@ -473,6 +473,7 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
             isPlaying={playerState.isPlaying}
             isPaused={playerState.isPaused}
             progress={progress}
+            currentSentenceIndex={playerState.currentSentenceIndex}
             currentTime={playerState.currentTime}
             duration={playerState.duration}
             onSentenceClick={onSentenceClick}

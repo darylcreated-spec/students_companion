@@ -9,6 +9,7 @@ const DEFAULT_PLAYER_STATE: AudioPlayerState = {
   currentDocumentId: null,
   currentSegmentId: null,
   currentSegmentIndex: 0,
+  currentSentenceIndex: 0,
   isPlaying: false,
   isPaused: false,
   currentTime: 0,
@@ -217,11 +218,22 @@ export function useAudioPlayer(activeDocument: LectureDocument | null) {
         speechText = segment.originalContent;
       }
 
-      TTSEngine.speak(speechText, playbackRateRef.current, {
+      TTSEngine.speakFromSentence(speechText, 0, playbackRateRef.current, {
         onStart: () => {
           startTimer();
-          setPlayerState((prev) => ({ ...prev, isPlaying: true, isPaused: false }));
+          setPlayerState((prev) => ({ ...prev, isPlaying: true, isPaused: false, currentSentenceIndex: 0 }));
           BackgroundAudioKeepAlive.start();
+        },
+        onSentenceChange: (sentenceIndex, totalSentences) => {
+          const proportionalOffset = Math.round(
+            (sentenceIndex / Math.max(1, totalSentences)) * (segment.estimatedSeconds || 120)
+          );
+          setPlayerState((prev) => ({
+            ...prev,
+            currentSentenceIndex: sentenceIndex,
+            currentTime: proportionalOffset,
+          }));
+          saveBookmark(doc.id, segmentIndex, proportionalOffset);
         },
         onEnd: () => {
           stopTimer();
@@ -297,16 +309,21 @@ export function useAudioPlayer(activeDocument: LectureDocument | null) {
       HapticFeedback.trigger('light');
 
       const fullText = seg.synthesizedAudioText || seg.originalContent;
-      const sentenceRegex = /[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g;
-      const allSentences = fullText.match(sentenceRegex) || [fullText];
-      const remainingSentences = allSentences.slice(sentenceIndex);
-      const remainingSpeechText = remainingSentences.join(' ').trim() || sentenceText;
 
-      TTSEngine.speak(remainingSpeechText, playbackRateRef.current, {
+      TTSEngine.speakFromSentence(fullText, sentenceIndex, playbackRateRef.current, {
         onStart: () => {
           startTimer();
-          setPlayerState((prev) => ({ ...prev, isPlaying: true, isPaused: false }));
+          setPlayerState((prev) => ({ ...prev, isPlaying: true, isPaused: false, currentSentenceIndex: sentenceIndex }));
           BackgroundAudioKeepAlive.start();
+        },
+        onSentenceChange: (idx, total) => {
+          const offset = Math.round((idx / Math.max(1, total)) * seg.estimatedSeconds);
+          setPlayerState((prev) => ({
+            ...prev,
+            currentSentenceIndex: idx,
+            currentTime: offset,
+          }));
+          saveBookmark(doc.id, currentSegmentIndexRef.current, offset);
         },
         onEnd: () => {
           stopTimer();

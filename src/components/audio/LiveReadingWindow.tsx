@@ -27,6 +27,7 @@ interface LiveReadingWindowProps {
   progress: number; // 0 to 1
   currentTime: number;
   duration: number;
+  currentSentenceIndex?: number;
   onSentenceClick?: (sentenceIndex: number, totalSentences: number, sentenceText: string) => void;
   onOpenChapterPicker?: () => void;
   fillHeight?: boolean;
@@ -45,6 +46,7 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
   isPlaying,
   isPaused,
   progress,
+  currentSentenceIndex,
   currentTime,
   duration,
   onSentenceClick,
@@ -75,10 +77,14 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
       .filter(Boolean);
   }, [content]);
 
-  const activeIndex = Math.min(
-    sentences.length - 1,
-    Math.max(0, Math.floor(progress * (sentences.length || 1)))
-  );
+  // Use the exact sentence index directly from speech engine when available
+  const activeIndex =
+    typeof currentSentenceIndex === 'number' && currentSentenceIndex >= 0
+      ? currentSentenceIndex
+      : Math.min(
+          sentences.length - 1,
+          Math.max(0, Math.floor(progress * (sentences.length || 1)))
+        );
 
   // Auto-scroll to active sentence when playing in teleprompter mode
   useEffect(() => {
