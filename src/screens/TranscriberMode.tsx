@@ -16,6 +16,7 @@ import { VoiceRecognitionService } from '../services/audio/speechRecognition';
 import { PunctuationService } from '../services/audio/punctuationService';
 import { WaveformVisualizer } from '../components/audio/WaveformVisualizer';
 import { HapticFeedback } from '../services/device/deviceDetector';
+import { jsPDF } from 'jspdf';
 
 export const TranscriberMode: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -137,13 +138,15 @@ export const TranscriberMode: React.FC = () => {
       a.click();
       URL.revokeObjectURL(url);
     } else if (format === 'pdf') {
-      import('jspdf').then(({ jsPDF }) => {
+      try {
         const doc = new jsPDF();
         doc.setFontSize(11);
         const lines = doc.splitTextToSize(text, 180);
         doc.text(lines, 15, 20);
         doc.save(`${filename}.pdf`);
-      });
+      } catch (err) {
+        console.error('Failed to generate PDF', err);
+      }
     } else if (format === 'docx') {
       const html = `<html><body><p>${text.replace(/\n/g, '</p><p>')}</p></body></html>`;
       const blob = new Blob([html], {
