@@ -427,8 +427,14 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
               onDocumentAdded(doc, idx);
             }}
           />
-          {documents.length > 1 && (
-            <div className="space-y-1.5 pt-1">
+          {documents.length > 0 && (
+            <div className="space-y-1.5 pt-2 border-t border-white/5">
+              <div className="flex items-center justify-between px-1 pb-1">
+                <span className="text-[11px] font-mono text-slate-400 font-medium uppercase">
+                  Library ({documents.length} {documents.length === 1 ? 'Document' : 'Documents'})
+                </span>
+                <span className="text-[10px] font-mono text-slate-500">Tap trash icon to delete</span>
+              </div>
               {documents.map((doc) => (
                 <LectureCard
                   key={doc.id}
