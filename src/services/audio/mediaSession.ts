@@ -59,16 +59,38 @@ export class MediaSessionService {
     this.setActionHandler('stop', config.onPause);
   }
 
-  public static setPlaybackState(state: 'none' | 'paused' | 'playing') {
-    if (typeof window !== 'undefined' && 'mediaSession' in navigator) {
-      navigator.mediaSession.playbackState = state;
+  public static setPositionState(state: { duration: number; playbackRate: number; position: number }) {
+    if (
+      typeof window !== 'undefined' &&
+      'mediaSession' in navigator &&
+      typeof navigator.mediaSession.setPositionState === 'function'
+    ) {
+      try {
+        const safeDuration = Math.max(1, Math.round(state.duration || 1));
+        const safePosition = Math.min(safeDuration, Math.max(0, Math.round(state.position || 0)));
+        navigator.mediaSession.setPositionState({
+          duration: safeDuration,
+          playbackRate: Math.max(0.5, Math.min(2.5, state.playbackRate || 1.0)),
+          position: safePosition,
+        });
+      } catch (err) {
+        // Some browsers disallow setPositionState if audio element isn't currently loaded
+      }
     }
   }
 
-  private static setActionHandler(action: MediaSessionAction, handler: () => void) {
+  public static setPlaybackState(state: 'none' | 'paused' | 'playing') {
+    if (typeof window !== 'undefined' && 'mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.playbackState = state;
+      } catch (_) {}
+    }
+  }
+
+  private static setActionHandler(action: MediaSessionAction, handler: (details?: any) => void) {
     try {
-      navigator.mediaSession.setActionHandler(action, () => {
-        handler();
+      navigator.mediaSession.setActionHandler(action, (details) => {
+        handler(details);
       });
     } catch (error) {
       console.warn(`MediaSession action "${action}" not supported:`, error);

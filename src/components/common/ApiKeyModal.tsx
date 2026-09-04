@@ -66,6 +66,13 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState<BrowserInfo | null>(null);
+  const [oledMode, setOledMode] = useState(
+    !!settings.oledMode || (typeof localStorage !== 'undefined' && localStorage.getItem('STUDENT_COMPANION_OLED') === 'true')
+  );
+  const [haptics, setHaptics] = useState(
+    settings.hapticFeedbackEnabled !== false &&
+      (typeof localStorage !== 'undefined' ? localStorage.getItem('STUDENT_COMPANION_HAPTICS') !== 'false' : true)
+  );
 
   useEffect(() => {
     const info = DeviceDetector.getInfo();
@@ -138,6 +145,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
     localStorage.setItem('CLOUD_VOICE_NAME', cloudVoice);
     localStorage.setItem('GOOGLE_TTS_KEY', googleTtsKey.trim());
     localStorage.setItem('GEMINI_API_KEY', apiKey.trim());
+    localStorage.setItem('STUDENT_COMPANION_OLED', oledMode ? 'true' : 'false');
+    localStorage.setItem('STUDENT_COMPANION_HAPTICS', haptics ? 'true' : 'false');
 
     onSaveSettings({
       ...settings,
@@ -149,6 +158,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
       googleCloudTtsKey: googleTtsKey.trim(),
       geminiApiKey: apiKey.trim(),
       autoResumeAfterNote: autoResume,
+      oledMode,
+      hapticFeedbackEnabled: haptics,
     });
 
     setSaved(true);
@@ -281,6 +292,55 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
             onChange={(e) => setRate(parseFloat(e.target.value))}
             className="w-full accent-cyan-400 bg-slate-800 h-1.5 rounded-lg cursor-pointer"
           />
+        </div>
+
+        {/* Commute Ergonomics & Battery Mode */}
+        <div className="space-y-2 pt-2 border-t border-white/5">
+          <div className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">
+            Commute Ergonomics & Battery
+          </div>
+
+          {/* OLED Pure Black Toggle */}
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-white/5">
+            <div>
+              <div className="text-xs font-semibold text-slate-200">OLED Pure Black Theme</div>
+              <div className="text-[10px] text-slate-400 font-mono">Maximum battery saving on mobile screens</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOledMode(!oledMode)}
+              className={`w-11 h-6 rounded-full transition-colors relative ${
+                oledMode ? 'bg-cyan-400' : 'bg-slate-700'
+              }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-slate-950 transition-transform ${
+                  oledMode ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Haptic Feedback Toggle */}
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-white/5">
+            <div>
+              <div className="text-xs font-semibold text-slate-200">Tactile Haptic Feedback</div>
+              <div className="text-[10px] text-slate-400 font-mono">Pocket vibration pulses on skip & bookmark</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setHaptics(!haptics)}
+              className={`w-11 h-6 rounded-full transition-colors relative ${
+                haptics ? 'bg-cyan-400' : 'bg-slate-700'
+              }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-slate-950 transition-transform ${
+                  haptics ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
         {/* 5. Device Compatibility Info */}

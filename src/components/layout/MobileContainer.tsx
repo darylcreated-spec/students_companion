@@ -3,9 +3,10 @@ import { DeviceDetector, BrowserInfo } from '../../services/device/deviceDetecto
 
 interface MobileContainerProps {
   children: React.ReactNode;
+  oledMode?: boolean;
 }
 
-export const MobileContainer: React.FC<MobileContainerProps> = ({ children }) => {
+export const MobileContainer: React.FC<MobileContainerProps> = ({ children, oledMode = false }) => {
   const [deviceInfo, setDeviceInfo] = useState<BrowserInfo | null>(null);
 
   useEffect(() => {
@@ -15,9 +16,19 @@ export const MobileContainer: React.FC<MobileContainerProps> = ({ children }) =>
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#070B14] flex flex-col items-center justify-center overscroll-none selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div
+      className={`min-h-screen flex flex-col items-center justify-center overscroll-none selection:bg-cyan-500/30 selection:text-cyan-200 transition-colors duration-300 ${
+        oledMode ? 'bg-[#000000]' : 'bg-[#070B14]'
+      }`}
+    >
       {/* Universal Responsive Container */}
-      <div className="relative w-full h-[100dvh] max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl sm:h-[94vh] sm:my-auto bg-[#0A0F1D] sm:rounded-3xl sm:border sm:border-slate-800/80 shadow-2xl flex flex-col overflow-hidden transition-all duration-300">
+      <div
+        className={`relative w-full h-[100dvh] max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl sm:h-[94vh] sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 ${
+          oledMode
+            ? 'bg-[#000000] sm:border sm:border-zinc-800'
+            : 'bg-[#0A0F1D] sm:border sm:border-slate-800/80'
+        }`}
+      >
         {/* Main Reactive Content Area with Safe-Area Padding */}
         <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
           {children}

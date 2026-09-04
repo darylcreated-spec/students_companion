@@ -12,17 +12,29 @@ import {
   Layers,
   Sparkles,
   ArrowRight,
-  FolderOpen
+  FolderOpen,
+  Plus,
+  Trash2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { extractDocumentText, IngestionInput } from '../../services/parsers/documentParser';
+import { parseImageOcr } from '../../services/parsers/ocrParser';
 import { db } from '../../db/database';
 import { LectureDocument, LectureSegment } from '../../types';
+import { HapticFeedback } from '../../services/device/deviceDetector';
 
 interface UniversalIngestionPortalProps {
   onDocumentAdded: (doc: LectureDocument, startChapterIndex?: number) => void;
 }
 
 type PortalMode = 'files-ocr' | 'google-doc' | 'onedrive' | 'paste';
+
+interface QueuedPage {
+  id: string;
+  file: File;
+  previewUrl: string;
+  pageNumber: number;
+}
 
 export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> = ({
   onDocumentAdded,
@@ -31,6 +43,9 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressMsg, setProgressMsg] = useState('');
   const [progressPercent, setProgressPercent] = useState(0);
+
+  // Multi-Page Batch Camera Scanner Queue
+  const [pageQueue, setPageQueue] = useState<QueuedPage[]>([]);
 
   // Cloud/Paste Form States
   const [docTitle, setDocTitle] = useState('');
@@ -63,17 +78,94 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
       setSelectedStartChapter(0);
       setIsProcessing(false);
       setProgressMsg('');
+      HapticFeedback.trigger('success');
     } catch (err: any) {
       console.error('Ingestion error:', err);
       alert(`Error reading content: ${err.message || 'Unsupported format'}`);
       setIsProcessing(false);
       setProgressMsg('');
+      HapticFeedback.trigger('warning');
     }
   };
 
   const handleFileUpload = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     handleProcessInput(files[0]);
+  };
+
+  // Add photo scan to batch queue
+  const handleCameraSnap = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const previewUrl = URL.createObjectURL(file);
+    HapticFeedback.trigger('light');
+
+    setPageQueue((prev) => [
+      ...prev,
+      {
+        id: `page-${Date.now()}-${prev.length + 1}`,
+        file,
+        previewUrl,
+        pageNumber: prev.length + 1,
+      },
+    ]);
+  };
+
+  const handleRemoveQueuedPage = (id: string) => {
+    HapticFeedback.trigger('light');
+    setPageQueue((prev) => {
+      const filtered = prev.filter((p) => p.id !== id);
+      return filtered.map((p, i) => ({ ...p, pageNumber: i + 1 }));
+    });
+  };
+
+  // Compile batch of scanned pages into one multi-chapter lecture
+  const handleCompileBatchOcr = async () => {
+    if (pageQueue.length === 0) return;
+
+    setIsProcessing(true);
+    setProgressPercent(10);
+    setProgressMsg(`Starting OCR on ${pageQueue.length} pages...`);
+    HapticFeedback.trigger('medium');
+
+    try {
+      const combinedTexts: string[] = [];
+      for (let i = 0; i < pageQueue.length; i++) {
+        const page = pageQueue[i];
+        const pct = Math.round(10 + ((i + 1) / pageQueue.length) * 80);
+        setProgressPercent(pct);
+        setProgressMsg(`OCR scanning Page ${i + 1} of ${pageQueue.length}...`);
+
+        const result = await parseImageOcr(page.file, (_, status) => {
+          setProgressMsg(`Page ${i + 1}/${pageQueue.length}: ${status}`);
+        });
+
+        if (result.text.trim()) {
+          combinedTexts.push(`## Chapter ${i + 1}: Page ${i + 1} Reading\n\n${result.text.trim()}`);
+        }
+      }
+
+      if (combinedTexts.length === 0) {
+        throw new Error('No legible text could be recognized from the captured pages.');
+      }
+
+      const mergedRawText = combinedTexts.join('\n\n---\n\n');
+      const defaultTitle = `Textbook Scan (${pageQueue.length} Pages)`;
+
+      await handleProcessInput({
+        rawTextContent: mergedRawText,
+        customTitle: defaultTitle,
+        sourceType: 'image-ocr',
+      });
+
+      // Clear queue once built
+      setPageQueue([]);
+    } catch (err: any) {
+      console.error('Batch OCR error:', err);
+      alert(`Error compiling pages: ${err.message || 'Unknown error'}`);
+      setIsProcessing(false);
+      setProgressMsg('');
+    }
   };
 
   const handleCloudSubmit = () => {
@@ -116,25 +208,28 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
   };
 
   return (
-    <div className="w-full rounded-3xl bg-[#0E1426]/90 border border-cyan-400/30 shadow-2xl p-5 flex flex-col space-y-4 backdrop-blur-xl">
+    <div className="w-full rounded-3xl bg-[#0E1426]/90 border border-cyan-400/30 shadow-2xl p-4 flex flex-col space-y-3.5 backdrop-blur-xl">
       {/* Portal Header */}
-      <div className="flex items-center justify-between border-b border-white/5 pb-3">
+      <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
         <div className="flex items-center space-x-2">
-          <div className="p-2 rounded-xl bg-cyan-950/80 border border-cyan-400/40 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]">
+          <div className="p-1.5 rounded-xl bg-cyan-950/80 border border-cyan-400/40 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.25)]">
             <Layers className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-100">Universal Ingestion Portal</h3>
+            <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider">
+              Universal Ingestion Portal
+            </h3>
             <p className="text-[10px] text-slate-400 font-mono">
-              PDF • Google Docs • OneDrive • Scans & OCR • Word
+              PDF • Batch Camera OCR • Word • Google Docs • PPTX
             </p>
           </div>
         </div>
       </div>
 
-      {/* Hidden File Inputs - All Formats Allowed */}
+      {/* Hidden File Inputs */}
       <input
         ref={fileInputRef}
+        id="universal-file-input"
         type="file"
         accept="*/*"
         className="hidden"
@@ -142,11 +237,12 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
       />
       <input
         ref={cameraInputRef}
+        id="universal-camera-input"
         type="file"
         accept="image/*"
         capture="environment"
         className="hidden"
-        onChange={(e) => handleFileUpload(e.target.files)}
+        onChange={(e) => handleCameraSnap(e.target.files)}
       />
 
       {/* State A: Loading / Processing Progress */}
@@ -181,8 +277,8 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
 
       {/* State B: Chapter Recognition & Start Point Selector */}
       {!isProcessing && parsedResult && (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-          <div className="p-3.5 rounded-2xl bg-cyan-950/40 border border-cyan-400/40 space-y-1">
+        <div className="space-y-3.5 animate-in fade-in slide-in-from-bottom-2">
+          <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-400/40 space-y-1">
             <span className="text-[10px] font-mono text-cyan-300 uppercase tracking-wider font-bold">
               CONTENT RECOGNIZED • {parsedResult.segments.length} CHAPTERS
             </span>
@@ -241,13 +337,13 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
           <div className="flex items-center space-x-2 pt-1">
             <button
               onClick={() => setParsedResult(null)}
-              className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300 transition-colors"
+              className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSaveAndLaunch}
-              className="flex-[2] py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-obsidian-950 font-bold text-xs flex items-center justify-center space-x-1.5 shadow-[0_0_18px_rgba(34,211,238,0.5)] transition-all"
+              className="flex-[2] py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-obsidian-950 font-bold text-xs flex items-center justify-center space-x-1.5 shadow-[0_0_18px_rgba(34,211,238,0.5)] transition-all"
             >
               <Play className="w-4 h-4 fill-current ml-0.5" />
               <span>Start from Ch {selectedStartChapter + 1}</span>
@@ -303,32 +399,105 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
             </button>
           </div>
 
-          {/* Mode 1: File Dropzone & Camera OCR Scan */}
+          {/* Mode 1: File Dropzone & Multi-Page Camera Scanner */}
           {activeMode === 'files-ocr' && (
-            <div className="space-y-2">
-              <label
-                htmlFor="universal-file-input"
-                className="w-full p-5 rounded-2xl border-2 border-dashed border-slate-700/80 hover:border-cyan-400/60 bg-[#0A0F1D]/60 hover:bg-[#0A0F1D]/90 transition-all cursor-pointer flex flex-col items-center justify-center text-center group active:scale-[0.99] touch-manipulation select-none"
-              >
-                <div className="w-11 h-11 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 mb-2 group-hover:scale-105 transition-transform">
-                  <UploadCloud className="w-6 h-6" />
-                </div>
-                <h4 className="text-sm font-bold text-slate-100">
-                  Select Document or Photo Scan
-                </h4>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Tap to open phone's file manager (PDF, Word, PPTX, Images)
-                </p>
-              </label>
+            <div className="space-y-2.5">
+              {/* If Multi-Page Camera Queue Has Items */}
+              {pageQueue.length > 0 ? (
+                <div className="p-3 rounded-2xl bg-slate-900/90 border border-amber-400/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-300 font-mono flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>{pageQueue.length} Pages Captured</span>
+                    </span>
+                    <button
+                      onClick={() => setPageQueue([])}
+                      className="text-[10px] font-mono text-slate-400 hover:text-rose-400 transition-colors"
+                    >
+                      Clear All
+                    </button>
+                  </div>
 
-              {/* Instant Camera Scan Button for OCR */}
-              <label
-                htmlFor="universal-camera-input"
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-400 text-slate-300 hover:text-amber-300 text-xs font-mono flex items-center justify-center space-x-2 transition-colors cursor-pointer active:scale-[0.99] touch-manipulation select-none"
-              >
-                <Camera className="w-4 h-4 text-amber-400" />
-                <span>Take Photo / OCR Scan Book Page</span>
-              </label>
+                  {/* Scanned Page Thumbnails Strip */}
+                  <div className="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar">
+                    {pageQueue.map((item) => (
+                      <div
+                        key={item.id}
+                        className="relative w-16 h-20 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-black group"
+                      >
+                        <img
+                          src={item.previewUrl}
+                          alt={`Page ${item.pageNumber}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <span className="absolute bottom-1 left-1 px-1 py-0.5 rounded bg-black/80 text-[9px] font-mono text-cyan-300">
+                          P.{item.pageNumber}
+                        </span>
+                        <button
+                          onClick={() => handleRemoveQueuedPage(item.id)}
+                          className="absolute top-1 right-1 p-1 rounded-full bg-rose-500 text-white text-[9px] opacity-90 hover:opacity-100"
+                        >
+                          <Trash2 className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Snap Next Page Card */}
+                    <button
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="w-16 h-20 rounded-xl border-2 border-dashed border-cyan-400/50 hover:border-cyan-400 flex flex-col items-center justify-center text-cyan-400 text-center shrink-0 hover:bg-cyan-950/20 transition-all"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span className="text-[9px] font-mono mt-1">+ Page</span>
+                    </button>
+                  </div>
+
+                  {/* Batch Actions */}
+                  <div className="flex items-center space-x-2 pt-1">
+                    <button
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono font-semibold flex items-center justify-center gap-1.5"
+                    >
+                      <Camera className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Snap Next Page</span>
+                    </button>
+
+                    <button
+                      onClick={handleCompileBatchOcr}
+                      className="flex-[1.4] py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-amber-400 text-obsidian-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(34,211,238,0.4)] active:scale-95 transition-all"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Compile {pageQueue.length} Pages</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <label
+                    htmlFor="universal-file-input"
+                    className="w-full p-4 rounded-2xl border-2 border-dashed border-slate-700/80 hover:border-cyan-400/60 bg-[#0A0F1D]/60 hover:bg-[#0A0F1D]/90 transition-all cursor-pointer flex flex-col items-center justify-center text-center group active:scale-[0.99] touch-manipulation select-none"
+                  >
+                    <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 mb-1.5 group-hover:scale-105 transition-transform">
+                      <UploadCloud className="w-5 h-5" />
+                    </div>
+                    <h4 className="text-xs font-bold text-slate-100">
+                      Select Document or Photo Scan
+                    </h4>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      PDF, Word, PPTX, or Image files
+                    </p>
+                  </label>
+
+                  {/* Camera Scan Button with Multi-Page capability */}
+                  <label
+                    htmlFor="universal-camera-input"
+                    className="w-full py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-400 text-slate-300 hover:text-amber-300 text-xs font-mono flex items-center justify-center space-x-2 transition-colors cursor-pointer active:scale-[0.99] touch-manipulation select-none shadow-sm"
+                  >
+                    <Camera className="w-4 h-4 text-amber-400" />
+                    <span>Take Photo / Multi-Page Scan Book</span>
+                  </label>
+                </>
+              )}
             </div>
           )}
 
@@ -359,19 +528,19 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
             </div>
           )}
 
-          {/* Mode 3: Microsoft OneDrive / SharePoint */}
+          {/* Mode 3: OneDrive Sync */}
           {activeMode === 'onedrive' && (
             <div className="space-y-2.5">
               <input
                 type="text"
-                placeholder="Document Title (e.g. ECON 201 Chapter 4)"
+                placeholder="Lecture Title (e.g. Chemistry Review)"
                 value={docTitle}
                 onChange={(e) => setDocTitle(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 font-sora"
               />
               <textarea
                 rows={3}
-                placeholder="Paste OneDrive or SharePoint shared reading text..."
+                placeholder="Paste OneDrive shared document text or notes..."
                 value={pasteContent}
                 onChange={(e) => setPasteContent(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 font-sora resize-none"
@@ -386,19 +555,19 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
             </div>
           )}
 
-          {/* Mode 4: Paste Outline / Web Article */}
+          {/* Mode 4: Direct Paste */}
           {activeMode === 'paste' && (
             <div className="space-y-2.5">
               <input
                 type="text"
-                placeholder="Article or Reading Title"
+                placeholder="Reading Title (e.g. History Reading Week 3)"
                 value={docTitle}
                 onChange={(e) => setDocTitle(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 font-sora"
               />
               <textarea
-                rows={3}
-                placeholder="Paste web article, Notion note, or syllabus..."
+                rows={4}
+                placeholder="Paste article, textbook excerpts, or reading notes here..."
                 value={pasteContent}
                 onChange={(e) => setPasteContent(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 font-sora resize-none"
@@ -407,40 +576,13 @@ export const UniversalIngestionPortal: React.FC<UniversalIngestionPortalProps> =
                 onClick={handleCloudSubmit}
                 className="w-full py-2.5 rounded-xl bg-cyan-400 text-obsidian-950 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-[0_0_12px_rgba(34,211,238,0.3)]"
               >
-                <FileText className="w-4 h-4" />
-                <span>Generate Audio Chapters</span>
+                <ArrowRight className="w-4 h-4" />
+                <span>Format & Generate Chapters</span>
               </button>
             </div>
           )}
         </div>
       )}
-
-      {/* Native Mobile / Desktop File Manager Input */}
-      <input
-        id="universal-file-input"
-        ref={fileInputRef}
-        type="file"
-        accept=".pdf,.docx,.pptx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/markdown,image/*"
-        onChange={(e) => {
-          handleFileUpload(e.target.files);
-          e.target.value = '';
-        }}
-        className="sr-only"
-      />
-
-      {/* Native Camera Capture Input for Book Page Photo OCR */}
-      <input
-        id="universal-camera-input"
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={(e) => {
-          handleFileUpload(e.target.files);
-          e.target.value = '';
-        }}
-        className="sr-only"
-      />
     </div>
   );
 };

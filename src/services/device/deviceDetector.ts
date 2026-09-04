@@ -186,3 +186,38 @@ export class DeviceDetector {
     window.addEventListener('click', unlock, { passive: true, once: true });
   }
 }
+
+/**
+ * Haptic Vibration Feedback Utility for Tactile Eyes-Free Commute Interactions
+ */
+export class HapticFeedback {
+  public static trigger(type: 'light' | 'medium' | 'success' | 'warning' = 'light'): void {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined' || !('vibrate' in navigator)) {
+      return;
+    }
+
+    try {
+      // Check user preference in localStorage if disabled
+      const setting = localStorage.getItem('STUDENT_COMPANION_HAPTICS');
+      if (setting === 'false') return;
+
+      switch (type) {
+        case 'light':
+          navigator.vibrate(12); // Short crisp pocket pulse
+          break;
+        case 'medium':
+          navigator.vibrate(25);
+          break;
+        case 'success':
+          navigator.vibrate([15, 60, 25]); // Double confirmation pulse
+          break;
+        case 'warning':
+          navigator.vibrate([40, 50, 40]);
+          break;
+      }
+    } catch (_) {
+      // Ignored if user policy or device disables vibration
+    }
+  }
+}
+

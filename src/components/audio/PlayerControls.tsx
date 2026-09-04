@@ -1,6 +1,16 @@
-import React from 'react';
-import { Play, Pause, RotateCcw, RotateCw, SkipBack, SkipForward, Mic, Bookmark } from 'lucide-react';
-import { PlaybackRate } from '../../types';
+import React, { useState } from 'react';
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  RotateCw,
+  SkipBack,
+  SkipForward,
+  Mic,
+  Bookmark,
+  Clock,
+} from 'lucide-react';
+import { PlaybackRate, SleepTimerMode } from '../../types';
 
 interface PlayerControlsProps {
   isPlaying: boolean;
@@ -13,6 +23,9 @@ interface PlayerControlsProps {
   onNextChapter: () => void;
   onRateChange: (rate: PlaybackRate) => void;
   onDropNote?: () => void;
+  sleepTimerMode?: SleepTimerMode;
+  sleepSecondsRemaining?: number | null;
+  onSelectSleepTimer?: (mode: SleepTimerMode) => void;
 }
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
@@ -26,30 +39,104 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onNextChapter,
   onRateChange,
   onDropNote,
+  sleepTimerMode = 'off',
+  sleepSecondsRemaining = null,
+  onSelectSleepTimer,
 }) => {
+  const [showSleepMenu, setShowSleepMenu] = useState(false);
   const rates: PlaybackRate[] = [1.0, 1.25, 1.5, 2.0];
   const activePlaying = isPlaying && !isPaused;
 
+  const formatSleepTime = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const sleepModes: { mode: SleepTimerMode; label: string }[] = [
+    { mode: 'off', label: 'Off' },
+    { mode: '15m', label: '15m' },
+    { mode: '30m', label: '30m' },
+    { mode: '45m', label: '45m' },
+    { mode: 'chapter', label: 'Ch End' },
+  ];
+
   return (
-    <div className="w-full flex flex-col items-center space-y-4">
-      {/* Playback Rate Selector Pills */}
-      <div className="flex items-center space-x-1.5 p-1 rounded-full bg-slate-900/90 border border-white/5">
-        {rates.map((r) => {
-          const isSelected = playbackRate === r;
-          return (
+    <div className="w-full flex flex-col items-center space-y-3 relative">
+      {/* Top Deck: Speed Selector & Sleep Timer */}
+      <div className="w-full flex items-center justify-between px-1">
+        {/* Playback Rate Selector Pills */}
+        <div className="flex items-center space-x-1 p-1 rounded-full bg-slate-900/90 border border-white/5">
+          {rates.map((r) => {
+            const isSelected = playbackRate === r;
+            return (
+              <button
+                key={r}
+                onClick={() => onRateChange(r)}
+                className={`px-2.5 py-1 rounded-full text-xs font-mono font-semibold transition-all ${
+                  isSelected
+                    ? 'bg-amber-400 text-obsidian-950 shadow-[0_0_12px_rgba(251,191,36,0.6)]'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {r}x
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Commute Sleep Timer Trigger */}
+        {onSelectSleepTimer && (
+          <div className="relative">
             <button
-              key={r}
-              onClick={() => onRateChange(r)}
-              className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-all ${
-                isSelected
-                  ? 'bg-amber-400 text-obsidian-950 shadow-[0_0_12px_rgba(251,191,36,0.6)]'
-                  : 'text-slate-400 hover:text-slate-200'
+              onClick={() => setShowSleepMenu(!showSleepMenu)}
+              aria-label="Commute sleep timer"
+              className={`px-3 py-1.5 rounded-full text-xs font-mono flex items-center space-x-1.5 border transition-all active:scale-95 ${
+                sleepTimerMode !== 'off'
+                  ? 'bg-cyan-950 border-cyan-400/80 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.3)]'
+                  : 'bg-slate-900/90 border-white/5 text-slate-400 hover:text-slate-200 hover:border-slate-700'
               }`}
             >
-              {r}x
+              <Clock className={`w-3.5 h-3.5 ${sleepTimerMode !== 'off' ? 'text-cyan-400 animate-pulse' : ''}`} />
+              <span className="font-semibold">
+                {sleepTimerMode !== 'off' && sleepSecondsRemaining !== null
+                  ? formatSleepTime(sleepSecondsRemaining)
+                  : sleepTimerMode === 'chapter'
+                  ? 'Ch End'
+                  : 'Sleep'}
+              </span>
             </button>
-          );
-        })}
+
+            {/* Quick Sleep Dropdown Menu */}
+            {showSleepMenu && (
+              <div className="absolute right-0 bottom-full mb-2 w-44 rounded-2xl bg-[#0E1426] border border-cyan-400/30 shadow-2xl p-2 z-40 space-y-1 animate-in fade-in slide-in-from-bottom-2">
+                <div className="px-2 py-1 text-[10px] font-mono text-slate-400 uppercase tracking-wider border-b border-white/5">
+                  Commute Sleep Timer
+                </div>
+                {sleepModes.map((item) => {
+                  const isCur = sleepTimerMode === item.mode;
+                  return (
+                    <button
+                      key={item.mode}
+                      onClick={() => {
+                        onSelectSleepTimer(item.mode);
+                        setShowSleepMenu(false);
+                      }}
+                      className={`w-full px-2.5 py-1.5 rounded-xl text-xs font-mono text-left flex items-center justify-between transition-colors ${
+                        isCur
+                          ? 'bg-cyan-500/20 text-cyan-300 font-bold'
+                          : 'text-slate-300 hover:bg-slate-800/80'
+                      }`}
+                    >
+                      <span>{item.label === 'Off' ? 'Turn Off' : item.label}</span>
+                      {isCur && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Main Tactile Commute Control Deck */}
@@ -112,7 +199,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
       {/* Optional "Drop Note" Commute Bookmark Trigger */}
       {onDropNote && (
-        <div className="w-full pt-2">
+        <div className="w-full pt-1">
           <button
             onClick={onDropNote}
             className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-400/50 hover:border-amber-400 text-amber-300 flex items-center justify-center space-x-3 shadow-[0_0_20px_rgba(251,191,36,0.25)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] active:scale-98 transition-all group"

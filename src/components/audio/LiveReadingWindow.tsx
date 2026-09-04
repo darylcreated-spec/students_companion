@@ -9,7 +9,7 @@ interface LiveReadingWindowProps {
   progress: number; // 0 to 1
   currentTime: number;
   duration: number;
-  onSentenceClick?: (sentenceIndex: number, totalSentences: number) => void;
+  onSentenceClick?: (sentenceIndex: number, totalSentences: number, sentenceText: string) => void;
   onOpenChapterPicker?: () => void;
   fillHeight?: boolean;
 }
@@ -140,7 +140,7 @@ export const LiveReadingWindow: React.FC<LiveReadingWindowProps> = ({
               <p
                 key={idx}
                 data-active={isCurrent}
-                onClick={() => onSentenceClick?.(idx, sentences.length)}
+                onClick={() => onSentenceClick?.(idx, sentences.length, sentence)}
                 title="Tap to start reading from this sentence"
                 className={`transition-all duration-200 rounded-xl p-1.5 cursor-pointer group relative ${
                   isCurrent

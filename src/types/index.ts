@@ -58,6 +58,17 @@ export interface AudioPlayerState {
   ttsEngineType: 'browser' | 'google-cloud';
 }
 
+export type SleepTimerMode = 'off' | '15m' | '30m' | '45m' | 'chapter' | 'document';
+
+export interface CommuteBookmark {
+  documentId: string;
+  documentTitle: string;
+  chapterIndex: number;
+  chapterTitle: string;
+  currentTime: number;
+  updatedAt: number;
+}
+
 export interface AppSettings {
   geminiApiKey: string;
   googleCloudTtsKey?: string;
@@ -69,6 +80,7 @@ export interface AppSettings {
   speechRate: number;
   hapticFeedbackEnabled: boolean;
   commuteSafeMode: boolean;
+  oledMode?: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -82,4 +94,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   speechRate: 1.0,
   hapticFeedbackEnabled: true,
   commuteSafeMode: true,
+  oledMode: false,
 };
+

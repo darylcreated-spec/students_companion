@@ -14,6 +14,7 @@ import {
 import { VoiceRecognitionService } from '../services/audio/speechRecognition';
 import { PunctuationService } from '../services/audio/punctuationService';
 import { WaveformVisualizer } from '../components/audio/WaveformVisualizer';
+import { HapticFeedback } from '../services/device/deviceDetector';
 
 export const TranscriberMode: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -48,6 +49,7 @@ export const TranscriberMode: React.FC = () => {
 
   // Start recording synchronously on user gesture (required for mobile iOS & Android)
   const startRecording = useCallback(() => {
+    HapticFeedback.trigger('medium');
     setErrorMessage(null);
     setIsRecording(true);
     setSeconds(0);
@@ -72,6 +74,7 @@ export const TranscriberMode: React.FC = () => {
   }, []);
 
   const stopRecording = useCallback(() => {
+    HapticFeedback.trigger('medium');
     VoiceRecognitionService.stopListening();
     setIsRecording(false);
     setAudioLevel(0);
@@ -85,6 +88,7 @@ export const TranscriberMode: React.FC = () => {
   }, []);
 
   const clearTranscript = useCallback(() => {
+    HapticFeedback.trigger('light');
     setTranscript('');
     setSeconds(0);
     setErrorMessage(null);
@@ -97,11 +101,13 @@ export const TranscriberMode: React.FC = () => {
     const current = transcriptRef.current;
     if (!current || !current.trim() || isPunctuating) return;
 
+    HapticFeedback.trigger('light');
     setIsPunctuating(true);
     try {
       const formatted = await PunctuationService.autoPunctuateWithAI(current);
       setTranscript(formatted);
       setPunctuationSuccess(true);
+      HapticFeedback.trigger('success');
       setTimeout(() => setPunctuationSuccess(false), 2500);
     } catch (e) {
       console.warn('Auto punctuate error:', e);
@@ -113,10 +119,11 @@ export const TranscriberMode: React.FC = () => {
   };
 
   // Export functions
-  const exportAs = useCallback((format: 'txt' | 'pdf' | 'docx') => {
+  const exportAs = useCallback((format: 'txt' | 'pdf' | 'docx' | 'anki') => {
     const text = transcriptRef.current.trim();
     if (!text) return;
 
+    HapticFeedback.trigger('success');
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
     const filename = `transcription-${timestamp}`;
 
@@ -145,6 +152,31 @@ export const TranscriberMode: React.FC = () => {
       const a = document.createElement('a');
       a.href = url;
       a.download = `${filename}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'anki') {
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+      const rows = [
+        '#separator:tab',
+        '#html:true',
+        '#tags column:3',
+        '#deck:Student Companion Commute Notes',
+      ];
+
+      sentences.forEach((sentence, idx) => {
+        const clean = sentence.trim().replace(/\t/g, ' ');
+        if (!clean) return;
+        const front = `<b>Lecture Note #${idx + 1}</b><br><i>What is the core takeaway?</i>`;
+        const back = `${clean}`;
+        const tags = 'students_companion commute_notes exam_review';
+        rows.push(`${front}\t${back}\t${tags}`);
+      });
+
+      const blob = new Blob([rows.join('\n')], { type: 'text/tab-separated-values;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}-anki.tsv`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -388,6 +420,19 @@ export const TranscriberMode: React.FC = () => {
           >
             {exportedFormat === 'docx' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <FileText className="w-3.5 h-3.5" />}
             <span>DOCX</span>
+          </button>
+
+          <button
+            onClick={() => exportAs('anki')}
+            className={`flex-1 py-2.5 rounded-xl border text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
+              exportedFormat === 'anki'
+                ? 'bg-amber-400/20 border-amber-400/80 text-amber-300'
+                : 'bg-slate-900 border-amber-400/30 text-amber-300/90 hover:border-amber-400'
+            }`}
+            title="Export to Anki Flashcards Deck"
+          >
+            {exportedFormat === 'anki' ? <Check className="w-3.5 h-3.5 text-amber-400" /> : <Sparkles className="w-3.5 h-3.5 text-amber-400" />}
+            <span>ANKI</span>
           </button>
         </div>
       )}

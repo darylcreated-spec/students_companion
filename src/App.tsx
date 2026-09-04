@@ -68,6 +68,11 @@ export default function App() {
     seekToTime,
     playSegment,
     playFromSentence,
+    sleepTimerMode,
+    sleepSecondsRemaining,
+    setSleepTimer,
+    savedBookmark,
+    resumeFromBookmark,
   } = useAudioPlayer(activeDocument);
 
   // Handle Play toggle from document card
@@ -91,7 +96,7 @@ export default function App() {
   return (
     <>
       {isLoading && <LoadingScreen onLoaded={() => setIsLoading(false)} />}
-      <MobileContainer>
+      <MobileContainer oledMode={!!settings.oledMode}>
       {/* Top Header with PWA Mobile Install Option & Settings */}
       <TopHeader
         title={
@@ -137,6 +142,11 @@ export default function App() {
             setTimeout(() => playSegment(startChapterIndex, 0), 250);
           }}
           onDeleteDocument={handleDeleteDocument}
+          sleepTimerMode={sleepTimerMode}
+          sleepSecondsRemaining={sleepSecondsRemaining}
+          onSelectSleepTimer={setSleepTimer}
+          savedBookmark={savedBookmark}
+          onResumeBookmark={resumeFromBookmark}
         />
       )}
 
