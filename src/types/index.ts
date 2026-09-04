@@ -69,6 +69,30 @@ export interface CommuteBookmark {
   updatedAt: number;
 }
 
+export type HighlightColor = 'amber' | 'cyan' | 'emerald' | 'purple';
+
+export interface TextHighlight {
+  id: string;
+  documentId: string;
+  chapterIndex: number;
+  sentenceIndex?: number;
+  text: string;
+  color: HighlightColor;
+  createdAt: number;
+}
+
+export interface WordDefinition {
+  word: string;
+  phonetic?: string;
+  partOfSpeech: string;
+  definition: string;
+  example?: string;
+  synonyms?: string[];
+  source?: string;
+}
+
+export type EReaderTheme = 'dark' | 'oled' | 'sepia';
+
 export interface AppSettings {
   geminiApiKey: string;
   googleCloudTtsKey?: string;

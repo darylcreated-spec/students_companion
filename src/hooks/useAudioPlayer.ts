@@ -352,6 +352,84 @@ export function useAudioPlayer(activeDocument: LectureDocument | null) {
     [startTimer, stopTimer, playSegment, saveBookmark]
   );
 
+  // Play only highlighted sentences for commuting journey
+  const playHighlights = useCallback(
+    (highlightsToPlay: import('../types').TextHighlight[]) => {
+      if (!highlightsToPlay || highlightsToPlay.length === 0) return;
+      const doc = activeDocRef.current;
+      if (!doc) return;
+
+      stopTimer();
+      TTSEngine.stop();
+
+      const combinedText =
+        `Journey Highlights for ${doc.title}. ` +
+        highlightsToPlay.map((h, i) => `Key highlight ${i + 1}: ${h.text}`).join('. ');
+
+      const estimatedDuration = Math.max(30, highlightsToPlay.length * 15);
+
+      setPlayerState((prev) => ({
+        ...prev,
+        isPlaying: true,
+        isPaused: false,
+        currentTime: 0,
+        duration: estimatedDuration,
+        isBuffering: false,
+      }));
+
+      MediaSessionService.updateMetadata({
+        title: `Journey Highlights (${highlightsToPlay.length} items)`,
+        album: doc.title,
+        artist: "Student's Companion",
+        onPlay: () => resume(),
+        onPause: () => pause(),
+        onSeekBackward: () => skip(-15),
+        onSeekForward: () => skip(15),
+        onPreviousTrack: () => previousChapter(),
+        onNextTrack: () => nextChapter(),
+      });
+
+      MediaSessionService.setPlaybackState('playing');
+      BackgroundAudioKeepAlive.start();
+      HapticFeedback.trigger('medium');
+
+      TTSEngine.speak(combinedText, playbackRateRef.current, {
+        onStart: () => {
+          startTimer();
+          setPlayerState((prev) => ({ ...prev, isPlaying: true, isPaused: false }));
+          BackgroundAudioKeepAlive.start();
+        },
+        onEnd: () => {
+          stopTimer();
+          MediaSessionService.setPlaybackState('paused');
+          setPlayerState((prev) => ({ ...prev, isPlaying: false, isPaused: false, currentTime: prev.duration }));
+          BackgroundAudioKeepAlive.stop();
+          HapticFeedback.trigger('success');
+        },
+        onPause: () => {
+          stopTimer();
+          setPlayerState((prev) => ({ ...prev, isPaused: true }));
+          MediaSessionService.setPlaybackState('paused');
+          BackgroundAudioKeepAlive.stop();
+        },
+        onResume: () => {
+          startTimer();
+          setPlayerState((prev) => ({ ...prev, isPaused: false, isPlaying: true }));
+          MediaSessionService.setPlaybackState('playing');
+          BackgroundAudioKeepAlive.start();
+        },
+        onError: (err) => {
+          console.warn('TTS highlight playback error:', err);
+          stopTimer();
+          setPlayerState((prev) => ({ ...prev, isPlaying: false, isPaused: false }));
+          BackgroundAudioKeepAlive.stop();
+        },
+      });
+    },
+    [startTimer, stopTimer]
+  );
+
+
   const togglePlayPause = useCallback(() => {
     HapticFeedback.trigger('medium');
     if (playerState.isPlaying && !playerState.isPaused) {
@@ -466,6 +544,7 @@ export function useAudioPlayer(activeDocument: LectureDocument | null) {
     seekToTime,
     playSegment,
     playFromSentence,
+    playHighlights,
     // Upgrades
     sleepTimerMode,
     sleepSecondsRemaining,

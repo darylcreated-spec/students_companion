@@ -68,6 +68,7 @@ export default function App() {
     seekToTime,
     playSegment,
     playFromSentence,
+    playHighlights,
     sleepTimerMode,
     sleepSecondsRemaining,
     setSleepTimer,
@@ -147,6 +148,7 @@ export default function App() {
           onSelectSleepTimer={setSleepTimer}
           savedBookmark={savedBookmark}
           onResumeBookmark={resumeFromBookmark}
+          onPlayHighlights={playHighlights}
         />
       )}
 

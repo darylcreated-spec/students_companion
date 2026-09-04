@@ -1,16 +1,18 @@
 import Dexie, { type Table } from 'dexie';
-import { LectureDocument, CommuteNote, AppSettings } from '../types';
+import { LectureDocument, CommuteNote, AppSettings, TextHighlight } from '../types';
 
 export class CompanionDatabase extends Dexie {
   documents!: Table<LectureDocument, string>;
   notes!: Table<CommuteNote, string>;
+  highlights!: Table<TextHighlight, string>;
   settings!: Table<{ key: string; value: any }, string>;
 
   constructor() {
     super('StudentsCompanionDB');
-    this.version(1).stores({
+    this.version(2).stores({
       documents: 'id, title, type, uploadedAt, status',
       notes: 'id, documentId, category, createdAt, timestampSeconds',
+      highlights: 'id, documentId, chapterIndex, createdAt',
       settings: 'key'
     });
   }

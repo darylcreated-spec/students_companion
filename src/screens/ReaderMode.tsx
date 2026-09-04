@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/database';
 import {
   LectureDocument,
   LectureSegment,
@@ -6,6 +8,9 @@ import {
   AudioPlayerState,
   SleepTimerMode,
   CommuteBookmark,
+  TextHighlight,
+  HighlightColor,
+  WordDefinition,
 } from '../types';
 import { LiveReadingWindow } from '../components/audio/LiveReadingWindow';
 import { PlayerControls } from '../components/audio/PlayerControls';
@@ -13,6 +18,8 @@ import { ChapterScrubber } from '../components/audio/ChapterScrubber';
 import { ChapterPickerModal } from '../components/audio/ChapterPickerModal';
 import { UniversalIngestionPortal } from '../components/library/UniversalIngestionPortal';
 import { LectureCard } from '../components/library/LectureCard';
+import { WordDefinitionModal } from '../components/reader/WordDefinitionModal';
+import { DictionaryService } from '../services/education/dictionaryService';
 import { TTSEngine } from '../services/audio/ttsEngine';
 import { HapticFeedback } from '../services/device/deviceDetector';
 import {
@@ -26,6 +33,7 @@ import {
   Sparkles,
   RotateCcw,
   Volume2,
+  Highlighter,
 } from 'lucide-react';
 
 interface ReaderModeProps {
@@ -53,6 +61,7 @@ interface ReaderModeProps {
   onSelectSleepTimer?: (mode: SleepTimerMode) => void;
   savedBookmark?: CommuteBookmark | null;
   onResumeBookmark?: () => void;
+  onPlayHighlights?: (highlights: TextHighlight[]) => void;
 }
 
 export const ReaderMode: React.FC<ReaderModeProps> = ({
@@ -79,6 +88,7 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
   onSelectSleepTimer,
   savedBookmark = null,
   onResumeBookmark,
+  onPlayHighlights,
 }) => {
   const [isChapterPickerOpen, setIsChapterPickerOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -86,6 +96,87 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
   const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
   const [isQuizRevealed, setIsQuizRevealed] = useState(false);
   const [quizCountdown, setQuizCountdown] = useState<number | null>(null);
+
+  // Live query of highlights for active document
+  const highlights = useLiveQuery(
+    () => (activeDocumentId ? db.highlights.where('documentId').equals(activeDocumentId).toArray() : []),
+    [activeDocumentId]
+  ) || [];
+
+  const chapterHighlights = highlights.filter(
+    (h) => h.chapterIndex === playerState.currentSegmentIndex
+  );
+
+  // Dictionary state
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [wordDefinition, setWordDefinition] = useState<WordDefinition | null>(null);
+  const [isWordLoading, setIsWordLoading] = useState(false);
+  const [wordError, setWordError] = useState<string | null>(null);
+  const [isDefinitionModalOpen, setIsDefinitionModalOpen] = useState(false);
+
+  const handleToggleHighlight = async (
+    sentenceIndex: number,
+    sentenceText: string,
+    color: HighlightColor
+  ) => {
+    if (!activeDocumentId) return;
+    const existing = highlights.find(
+      (h) =>
+        h.chapterIndex === playerState.currentSegmentIndex &&
+        h.sentenceIndex === sentenceIndex
+    );
+
+    if (existing) {
+      if (existing.color === color) {
+        await db.highlights.delete(existing.id);
+        HapticFeedback.trigger('light');
+      } else {
+        await db.highlights.update(existing.id, { color });
+        HapticFeedback.trigger('success');
+      }
+    } else {
+      const newHighlight: TextHighlight = {
+        id: 'hl-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+        documentId: activeDocumentId,
+        chapterIndex: playerState.currentSegmentIndex,
+        sentenceIndex,
+        text: sentenceText,
+        color,
+        createdAt: Date.now(),
+      };
+      await db.highlights.add(newHighlight);
+      HapticFeedback.trigger('success');
+    }
+  };
+
+  const handleLookupWord = async (rawWord: string) => {
+    const clean = DictionaryService.cleanWord(rawWord);
+    if (!clean) return;
+    setSelectedWord(clean);
+    setIsDefinitionModalOpen(true);
+    setIsWordLoading(true);
+    setWordError(null);
+    try {
+      const def = await DictionaryService.lookupWord(clean);
+      setWordDefinition(def);
+    } catch (err: any) {
+      setWordError(err.message || 'Could not find definition.');
+    } finally {
+      setIsWordLoading(false);
+    }
+  };
+
+  const handlePlayJourneyHighlights = () => {
+    HapticFeedback.trigger('medium');
+    if (highlights.length === 0) {
+      alert(
+        'No journey highlights yet! Tap any sentence in E-Book mode to highlight key takeaways for your commute.'
+      );
+      return;
+    }
+    onPlayHighlights?.(highlights);
+  };
+
 
   // Generate commute active-recall questions from chapter content
   const quizItems = React.useMemo(() => {
@@ -231,6 +322,21 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
         </div>
 
         <div className="flex items-center space-x-1.5 shrink-0">
+          {/* Journey Highlights Audio Playback Button */}
+          <button
+            id="journey-highlights-btn"
+            onClick={handlePlayJourneyHighlights}
+            className={`px-2.5 py-1.5 rounded-xl text-[11px] font-mono flex items-center gap-1.5 border transition-all active:scale-95 ${
+              highlights.length > 0
+                ? 'bg-amber-400/20 text-amber-300 border-amber-400/60 shadow-[0_0_10px_rgba(251,191,36,0.3)] hover:bg-amber-400/30 font-medium'
+                : 'bg-slate-900 border-white/5 text-slate-400 hover:text-amber-300'
+            }`}
+            title="Listen to your highlighted points for your commute journey"
+          >
+            <Highlighter className="w-3.5 h-3.5 text-amber-400" />
+            <span>Highlights ({highlights.length})</span>
+          </button>
+
           {/* Mode Switcher: Read vs Audio Quiz */}
           <button
             id="audio-quiz-btn"
@@ -363,6 +469,9 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
             onSentenceClick={onSentenceClick}
             onOpenChapterPicker={() => setIsChapterPickerOpen(true)}
             fillHeight
+            highlights={chapterHighlights}
+            onToggleHighlight={handleToggleHighlight}
+            onOpenDictionary={handleLookupWord}
           />
         ) : (
           /* Active Recall Audio Quiz Deck */
@@ -507,6 +616,46 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
         currentChapterIndex={playerState.currentSegmentIndex}
         onSelectChapter={onSelectChapter}
       />
+
+      {/* Word & Context Definition Modal */}
+      {isDefinitionModalOpen && (
+        <WordDefinitionModal
+          definition={wordDefinition}
+          isLoading={isWordLoading}
+          error={wordError}
+          onClose={() => {
+            setIsDefinitionModalOpen(false);
+            setWordDefinition(null);
+            setWordError(null);
+          }}
+          onStartReading={() => {
+            if (activeDocument && wordDefinition) {
+              // Find sentence containing the word if possible
+              const segText = currentSegment?.synthesizedAudioText || currentSegment?.originalContent || '';
+              const sentences = segText.split(/(?<=[.?!])\s+/);
+              const foundIdx = sentences.findIndex(s => s.toLowerCase().includes(wordDefinition.word.toLowerCase()));
+              if (foundIdx !== -1) {
+                onSentenceClick(foundIdx, sentences.length, sentences[foundIdx]);
+              } else {
+                onSentenceClick(0, sentences.length || 1, sentences[0] || '');
+              }
+            }
+          }}
+          onHighlightWord={async (color) => {
+            if (wordDefinition && activeDocumentId) {
+              await db.highlights.add({
+                id: 'hl-def-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+                documentId: activeDocumentId,
+                chapterIndex: playerState.currentSegmentIndex,
+                text: `${wordDefinition.word} (${wordDefinition.partOfSpeech || 'vocab'}): ${wordDefinition.definition}`,
+                color,
+                createdAt: Date.now(),
+              });
+              HapticFeedback.trigger('success');
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
