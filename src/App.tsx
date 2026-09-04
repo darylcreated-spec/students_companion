@@ -61,6 +61,7 @@ export default function App() {
     playerState,
     currentSegment,
     togglePlayPause,
+    pause,
     skip,
     setPlaybackRate,
     nextChapter,
@@ -159,7 +160,12 @@ export default function App() {
       {/* 2-Tab Bottom Navigation */}
       <BottomNav
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => {
+          if (tab === 'transcriber' && playerState.isPlaying) {
+            pause();
+          }
+          setActiveTab(tab);
+        }}
       />
 
       {/* Language & Voice Settings Modal */}
