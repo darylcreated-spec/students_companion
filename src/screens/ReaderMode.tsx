@@ -188,7 +188,7 @@ export const ReaderMode: React.FC<ReaderModeProps> = ({
     // Use segment keypoints if present
     if (currentSegment.keyPoints && currentSegment.keyPoints.length > 0) {
       currentSegment.keyPoints.forEach((kp, i) => {
-        const parts = kp.split(/:\s*|—\s*|-\s*/);
+        const parts = kp.split(/:\s*|—\s*|\s+-\s+/);
         if (parts.length >= 2) {
           items.push({
             question: `What is the core takeaway regarding ${parts[0].trim()}?`,

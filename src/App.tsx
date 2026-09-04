@@ -51,7 +51,7 @@ export default function App() {
   const activeDocument = documents.find((d) => d.id === activeDocId) || documents[0] || null;
 
   useEffect(() => {
-    if (!activeDocId && documents.length > 0) {
+    if ((!activeDocId || activeDocId === 'sample-quantum-logistics') && documents.length > 0) {
       setActiveDocId(documents[0].id);
     }
   }, [documents, activeDocId]);
