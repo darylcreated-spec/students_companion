@@ -1,7 +1,7 @@
 import React from 'react';
-import { BookOpen, Mic } from 'lucide-react';
+import { BookOpen, GraduationCap, Mic } from 'lucide-react';
 
-export type NavTab = 'reader' | 'transcriber';
+export type NavTab = 'reader' | 'daily' | 'transcriber';
 
 interface BottomNavProps {
   activeTab: NavTab;
@@ -17,6 +17,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       id: 'reader' as NavTab,
       label: 'Reader',
       icon: BookOpen,
+    },
+    {
+      id: 'daily' as NavTab,
+      label: 'Daily Lab',
+      icon: GraduationCap,
     },
     {
       id: 'transcriber' as NavTab,

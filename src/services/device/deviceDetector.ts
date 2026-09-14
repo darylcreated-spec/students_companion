@@ -191,7 +191,7 @@ export class DeviceDetector {
  * Haptic Vibration Feedback Utility for Tactile Eyes-Free Commute Interactions
  */
 export class HapticFeedback {
-  public static trigger(type: 'light' | 'medium' | 'success' | 'warning' = 'light'): void {
+  public static trigger(type: 'light' | 'medium' | 'success' | 'warning' | 'error' = 'light'): void {
     if (typeof window === 'undefined' || typeof navigator === 'undefined' || !('vibrate' in navigator)) {
       return;
     }
@@ -214,10 +214,33 @@ export class HapticFeedback {
         case 'warning':
           navigator.vibrate([40, 50, 40]);
           break;
+        case 'error':
+          navigator.vibrate([60, 40, 60]);
+          break;
       }
     } catch (_) {
       // Ignored if user policy or device disables vibration
     }
+  }
+
+  public static light(): void {
+    this.trigger('light');
+  }
+
+  public static medium(): void {
+    this.trigger('medium');
+  }
+
+  public static success(): void {
+    this.trigger('success');
+  }
+
+  public static warning(): void {
+    this.trigger('warning');
+  }
+
+  public static error(): void {
+    this.trigger('error');
   }
 }
 

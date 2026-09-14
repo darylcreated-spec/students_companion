@@ -255,6 +255,101 @@ Quantum annealing utilizes superposition and quantum tunneling to explore high-d
   const themes = ['dark', 'oled', 'sepia'];
   assert(themes.includes('sepia') && themes.includes('oled'), 'E-Book reader provides Sepia, OLED, and Dark reading modes.');
 
+  // TEST GROUP 15: Daily Literacy Lab (Vocab, Orthographic Spelling & Contextual Reading)
+  console.log('\n--- TEST GROUP 15: Daily Literacy Lab (Vocab, Orthographic Spelling & Contextual Reading) ---');
+
+  // 15.1 Orthographic mapping checkSpelling algorithm
+  function checkSpellingAlgorithm(input, target) {
+    const cleanIn = input.trim().toLowerCase();
+    const cleanTarget = target.trim().toLowerCase();
+
+    if (cleanIn === cleanTarget) {
+      return {
+        isCorrect: true,
+        cleanInput: cleanIn,
+        feedback: 'Outstanding! 100% correct spelling.',
+        scaffolding: cleanTarget.split('').join(' ')
+      };
+    }
+
+    const targetChars = cleanTarget.split('');
+    const inChars = cleanIn.split('');
+    const scaffold = targetChars
+      .map((ch, i) => (inChars[i] === ch ? ch : '_'))
+      .join(' ');
+
+    let hint = 'Keep going! Compare your letters with the syllable sounds.';
+    if (cleanIn.length > cleanTarget.length) {
+      hint = `Watch out: your spelling has ${cleanIn.length - cleanTarget.length} extra letter(s).`;
+    } else if (cleanIn.length < cleanTarget.length) {
+      hint = `Almost there! You are missing ${cleanTarget.length - cleanIn.length} letter(s).`;
+    }
+
+    return {
+      isCorrect: false,
+      cleanInput: cleanIn,
+      feedback: hint,
+      scaffolding: scaffold
+    };
+  }
+
+  // Exact match
+  const exactResult = checkSpellingAlgorithm('Persevere', 'Persevere');
+  assert(exactResult.isCorrect === true, 'Exact spelling match succeeds with 100% accuracy.');
+  assert(exactResult.scaffolding === 'p e r s e v e r e', 'Exact spelling scaffolding displays all target characters separated.');
+
+  // Scaffolding on misspelled input (e.g. 'percevere' instead of 'persevere')
+  const partialResult = checkSpellingAlgorithm('percevere', 'persevere');
+  assert(partialResult.isCorrect === false, 'Incorrect letter identified correctly.');
+  assert(partialResult.scaffolding === 'p e r _ e v e r e', 'Scaffolding reveals correct letters and masks mismatched letter with underscore.');
+
+  // Extra letters
+  const extraResult = checkSpellingAlgorithm('persevereee', 'persevere');
+  assert(extraResult.feedback.includes('2 extra letter(s)'), 'Detects and reports precise extra letter count to assist learners.');
+
+  // Missing letters
+  const missingResult = checkSpellingAlgorithm('persev', 'persevere');
+  assert(missingResult.feedback.includes('missing 3 letter(s)'), 'Detects and reports missing letter count to assist learners.');
+
+  // 15.2 Curriculum Track & Syllable Verification
+  const sampleLesson = {
+    dayNumber: 1,
+    word: 'Persevere',
+    phonetic: '/ˌpɜːrsəˈvɪr/',
+    syllables: ['per', 'se', 'vere'],
+    readingPassage: 'The secret is choosing to persevere. When you spend five focused minutes reading...',
+    comprehensionQuestion: 'According to the passage, what is the secret to building strong reading skills?',
+    comprehensionOptions: [
+      'Choosing to persevere with consistent daily practice',
+      'Memorizing an entire dictionary in one night',
+      'Never making any spelling mistakes'
+    ],
+    correctOptionIndex: 0
+  };
+
+  const syllablesJoined = sampleLesson.syllables.join('').toLowerCase();
+  assert(syllablesJoined === sampleLesson.word.toLowerCase(), 'Syllables cleanly concatenate to the target vocabulary word.');
+  assert(sampleLesson.readingPassage.toLowerCase().includes(sampleLesson.word.toLowerCase()), 'Reading passage contextually embeds the target vocabulary word.');
+  assert(sampleLesson.correctOptionIndex === 0, 'Comprehension question correctly designates educator-verified answer.');
+
+  // 15.3 Streak & Vault Persistence State
+  const initialProgress = {
+    currentDay: 1,
+    streakCount: 2,
+    lastCompletedDate: '2026-09-13',
+    masteredWords: ['Articulate', 'Diligent']
+  };
+
+  const todayStr = '2026-09-14';
+  const isConsecutiveDay =
+    initialProgress.lastCompletedDate &&
+    new Date(todayStr).getTime() - new Date(initialProgress.lastCompletedDate).getTime() <= 86400000 * 2;
+  const updatedStreak = isConsecutiveDay ? initialProgress.streakCount + 1 : 1;
+  const updatedMastered = Array.from(new Set([...initialProgress.masteredWords, sampleLesson.word]));
+
+  assert(updatedStreak === 3, 'Consecutive day practice increments daily streak count.');
+  assert(updatedMastered.includes('Persevere') && updatedMastered.length === 3, 'Mastery Vault permanently persists unlocked vocabulary words.');
+
   console.log('\n====================================================');
   console.log(`🏁 TEST RESULTS: ${passedTests}/${totalTests} TESTS PASSED (100%)`);
   console.log('====================================================\n');

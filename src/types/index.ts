@@ -122,3 +122,31 @@ export const DEFAULT_SETTINGS: AppSettings = {
   oledMode: false,
 };
 
+export interface DailyLesson {
+  id: string;
+  dayNumber: number;
+  word: string;
+  phonetic: string;
+  syllables: string[];
+  partOfSpeech: string;
+  friendlyDefinition: string;
+  sentenceExample: string;
+  memoryTrick: string;
+  rootOrigin: string;
+  spellingHint: string;
+  readingTitle: string;
+  readingPassage: string;
+  comprehensionQuestion: string;
+  comprehensionOptions: string[];
+  correctOptionIndex: number;
+  comprehensionExplanation: string;
+}
+
+export interface UserLiteracyProgress {
+  currentDay: number;
+  streakCount: number;
+  lastCompletedDate: string | null;
+  masteredWords: string[];
+  favoriteWords: string[];
+}
+

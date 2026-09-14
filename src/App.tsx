@@ -6,6 +6,7 @@ import { MobileContainer } from './components/layout/MobileContainer';
 import { TopHeader } from './components/layout/TopHeader';
 import { BottomNav, NavTab } from './components/layout/BottomNav';
 import { ReaderMode } from './screens/ReaderMode';
+import { DailyLiteracyScreen } from './screens/DailyLiteracyScreen';
 import { TranscriberMode } from './screens/TranscriberMode';
 import { ApiKeyModal } from './components/common/ApiKeyModal';
 import { PwaInstallModal } from './components/common/PwaInstallModal';
@@ -104,11 +105,15 @@ export default function App() {
         title={
           activeTab === 'reader'
             ? (activeDocument ? activeDocument.title : "Reader")
+            : activeTab === 'daily'
+            ? "Daily Literacy Lab"
             : "Transcriber"
         }
         subtitle={
           activeTab === 'reader' && activeDocument && currentSegment
             ? `Ch ${playerState.currentSegmentIndex + 1}: ${currentSegment.title}`
+            : activeTab === 'daily'
+            ? "Vocabulary • Spelling • Reading"
             : undefined
         }
         hasApiKey={!!settings.geminiApiKey}
@@ -153,15 +158,19 @@ export default function App() {
         />
       )}
 
+      {activeTab === 'daily' && (
+        <DailyLiteracyScreen />
+      )}
+
       {activeTab === 'transcriber' && (
         <TranscriberMode />
       )}
 
-      {/* 2-Tab Bottom Navigation */}
+      {/* 3-Tab Bottom Navigation */}
       <BottomNav
         activeTab={activeTab}
         onTabChange={(tab) => {
-          if (tab === 'transcriber' && playerState.isPlaying) {
+          if (tab !== 'reader' && playerState.isPlaying) {
             pause();
           }
           setActiveTab(tab);

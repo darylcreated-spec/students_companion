@@ -20,7 +20,7 @@ export class TTSEngine {
   private static currentUtterance: SpeechSynthesisUtterance | null = null;
   private static audioElement: HTMLAudioElement | null = null;
   private static silentAudio: HTMLAudioElement | null = null;
-  private static currentRate: PlaybackRate = 1.0;
+  private static currentRate: PlaybackRate | number = 1.0;
   private static currentPitch: number = 1.0;
   private static currentVoiceURI?: string;
   private static isPlaying = false;
@@ -73,7 +73,7 @@ export class TTSEngine {
    */
   public static async speak(
     text: string,
-    rate: PlaybackRate = 1.0,
+    rate: PlaybackRate | number = 1.0,
     callbacks: TTSPlaybackCallbacks = {},
     googleApiKey?: string,
     voiceURI?: string,
@@ -88,7 +88,7 @@ export class TTSEngine {
   public static async speakFromSentence(
     text: string,
     startSentenceIndex: number = 0,
-    rate: PlaybackRate = 1.0,
+    rate: PlaybackRate | number = 1.0,
     callbacks: TTSPlaybackCallbacks = {},
     googleApiKey?: string,
     voiceURI?: string,
@@ -298,7 +298,7 @@ export class TTSEngine {
 
   private static async speakViaGoogleCloud(
     text: string,
-    rate: PlaybackRate,
+    rate: PlaybackRate | number,
     callbacks: TTSPlaybackCallbacks,
     apiKey: string
   ) {
@@ -410,7 +410,7 @@ export class TTSEngine {
     }
   }
 
-  public static setRate(rate: PlaybackRate) {
+  public static setRate(rate: PlaybackRate | number) {
     this.currentRate = rate;
     if (this.audioElement) {
       this.audioElement.playbackRate = rate;
