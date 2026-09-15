@@ -4,7 +4,7 @@ import { TTSEngine } from '../../services/audio/ttsEngine';
 import { HapticFeedback } from '../../services/device/deviceDetector';
 import { DailyLiteracyManager } from '../../services/education/dailyLiteracyProgram';
 import {
-  Sparkles,
+  SpellCheck,
   Volume2,
   CheckCircle2,
   AlertCircle,
@@ -187,7 +187,7 @@ export const OrthographicLabStep: React.FC<OrthographicLabStepProps> = ({
       <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 shadow-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-purple-400">
-            <Sparkles className="w-4 h-4" />
+            <SpellCheck className="w-4 h-4" />
             <span>Step 3: Orthographic Lab (Phoneme-to-Grapheme)</span>
           </div>
           <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-300 font-mono font-bold">

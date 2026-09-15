@@ -19,7 +19,6 @@ import {
   Clock,
   Zap,
   RotateCcw,
-  Sparkles,
   Award
 } from 'lucide-react';
 

@@ -5,7 +5,7 @@ import { SRSEngine } from '../../services/education/srsEngine';
 import { HapticFeedback } from '../../services/device/deviceDetector';
 import {
   PenTool,
-  Sparkles,
+  GraduationCap,
   CheckCircle2,
   AlertCircle,
   ArrowRight,
@@ -165,7 +165,7 @@ export const SentenceTransferStep: React.FC<SentenceTransferStepProps> = ({
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4" />
+                <GraduationCap className="w-4 h-4" />
                 <span>Validate Sentence with AI</span>
               </>
             )}

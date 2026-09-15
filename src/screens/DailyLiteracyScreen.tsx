@@ -27,7 +27,7 @@ import {
   BookOpen,
   Layers,
   Compass,
-  Sparkles,
+  SpellCheck,
   PenTool,
   Trophy,
   Award,
@@ -213,7 +213,7 @@ export const DailyLiteracyScreen: React.FC = () => {
                 : 'bg-slate-800/80 text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Sparkles className="w-3 h-3" />
+            <SpellCheck className="w-3 h-3" />
             <span className="truncate">3. Spelling</span>
           </button>
 

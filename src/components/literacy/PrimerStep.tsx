@@ -5,7 +5,6 @@ import { HapticFeedback } from '../../services/device/deviceDetector';
 import {
   BookOpen,
   Volume2,
-  Sparkles,
   ArrowRight,
   Lightbulb,
   CheckCircle2,
@@ -158,7 +157,7 @@ export const PrimerStep: React.FC<PrimerStepProps> = ({ targetWords, onComplete 
         {/* Morphology Anatomy */}
         <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-4">
           <div className="flex items-center space-x-2 text-purple-400 text-xs font-bold uppercase tracking-wider mb-2">
-            <Sparkles className="w-4 h-4" />
+            <Layers className="w-4 h-4" />
             <span>Morpheme Decomposition</span>
           </div>
           <div className="space-y-1.5 text-xs">

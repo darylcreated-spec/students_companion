@@ -10,7 +10,6 @@ import {
   Clock,
   BookOpen,
   Calendar,
-  Sparkles,
   Award
 } from 'lucide-react';
 
