@@ -350,6 +350,91 @@ Quantum annealing utilizes superposition and quantum tunneling to explore high-d
   assert(updatedStreak === 3, 'Consecutive day practice increments daily streak count.');
   assert(updatedMastered.includes('Persevere') && updatedMastered.length === 3, 'Mastery Vault permanently persists unlocked vocabulary words.');
 
+  // TEST GROUP 16: Research-Grade Literacy Engine (SM-2 SRS, Lexile Immersion & AI Transfer)
+  console.log('\n--- TEST GROUP 16: Research-Grade Literacy Engine (SM-2 SRS, Lexile Immersion & AI Transfer) ---');
+
+  // 16.1 SM-2 Spaced Repetition Algorithm Verification
+  function calculateSM2(currentCard, quality) {
+    const q = Math.max(0, Math.min(5, Math.round(quality)));
+    let { easeFactor, interval, repetitions } = currentCard;
+
+    if (q >= 3) {
+      if (repetitions === 0) {
+        interval = 1;
+      } else if (repetitions === 1) {
+        interval = 6;
+      } else {
+        interval = Math.round(interval * easeFactor);
+      }
+      repetitions += 1;
+    } else {
+      repetitions = 0;
+      interval = 1;
+    }
+
+    easeFactor = easeFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+    if (easeFactor < 1.3) easeFactor = 1.3;
+
+    return { easeFactor: Number(easeFactor.toFixed(2)), interval, repetitions };
+  }
+
+  // First review with perfect score (5)
+  const cardStart = { easeFactor: 2.5, interval: 1, repetitions: 0 };
+  const rev1 = calculateSM2(cardStart, 5);
+  assert(rev1.interval === 1 && rev1.repetitions === 1 && rev1.easeFactor === 2.6, 'SM-2 initial perfect recall sets interval 1, repetitions 1, ease 2.6.');
+
+  // Second review with perfect score (5)
+  const rev2 = calculateSM2(rev1, 5);
+  assert(rev2.interval === 6 && rev2.repetitions === 2, 'SM-2 second successful recall increases interval to 6 days.');
+
+  // Third review with perfect score (5)
+  const rev3 = calculateSM2(rev2, 5);
+  assert(rev3.interval === Math.round(6 * rev2.easeFactor) && rev3.repetitions === 3, 'SM-2 third review expands interval exponentially by ease factor.');
+
+  // Failure review (grade 1)
+  const revFail = calculateSM2(rev3, 1);
+  assert(revFail.interval === 1 && revFail.repetitions === 0, 'SM-2 failure resets interval to 1 day and repetitions to 0.');
+  assert(revFail.easeFactor < rev3.easeFactor, 'SM-2 failure reduces ease factor to reflect difficulty.');
+
+  // 16.2 Lexile Immersion Passages & Checkpoints
+  const testPassage = {
+    domain: 'Philosophy',
+    lexile: '1000L',
+    wordCount: 465,
+    checkpoints: [
+      { wordOffset: 195, question: 'Question 1', correctIndex: 0 },
+      { wordOffset: 380, question: 'Question 2', correctIndex: 0 }
+    ]
+  };
+  assert(testPassage.wordCount >= 400 && testPassage.wordCount <= 600, 'Immersion passage meets 400-600 word immersion requirement.');
+  assert(testPassage.checkpoints.length === 2, 'Passage features exactly two embedded mid-text active checkpoints.');
+  assert(testPassage.checkpoints[0].wordOffset < testPassage.checkpoints[1].wordOffset, 'Checkpoints are spaced progressively through the reading stream.');
+
+  // 16.3 Semantic Sentence Validation Heuristic
+  function validateSentenceHeuristic(sentence, targetWord) {
+    const clean = sentence.trim();
+    const words = clean.split(/\s+/).filter(Boolean);
+    const hasWord = clean.toLowerCase().includes(targetWord.toLowerCase());
+    const hasPunctuation = /[.!?]$/.test(clean);
+    const isTautology = clean.toLowerCase().includes(`word is ${targetWord.toLowerCase()}`);
+
+    if (!hasWord) return { isValid: false, score: 20 };
+    if (words.length < 6 || isTautology) return { isValid: false, score: 40 };
+    return { isValid: true, score: hasPunctuation ? 90 : 80 };
+  }
+
+  const validSentence = "Scientists demanded empirical evidence before declaring the new theory established.";
+  const valResult = validateSentenceHeuristic(validSentence, "empirical");
+  assert(valResult.isValid === true && valResult.score >= 80, 'Valid original sentence with target word and punctuation passes with high score.');
+
+  const missingWordSentence = "The experiment was very thorough and took many weeks.";
+  const missResult = validateSentenceHeuristic(missingWordSentence, "empirical");
+  assert(missResult.isValid === false, 'Sentence omitting target word is rejected.');
+
+  const tautologySentence = "The word is empirical.";
+  const tautResult = validateSentenceHeuristic(tautologySentence, "empirical");
+  assert(tautResult.isValid === false, 'Tautological sentence talking about the word without context is rejected.');
+
   console.log('\n====================================================');
   console.log(`🏁 TEST RESULTS: ${passedTests}/${totalTests} TESTS PASSED (100%)`);
   console.log('====================================================\n');

@@ -1,11 +1,13 @@
 import Dexie, { type Table } from 'dexie';
-import { LectureDocument, CommuteNote, AppSettings, TextHighlight } from '../types';
+import { LectureDocument, CommuteNote, AppSettings, TextHighlight, SRSCard, ReadingAnalyticsSession } from '../types';
 
 export class CompanionDatabase extends Dexie {
   documents!: Table<LectureDocument, string>;
   notes!: Table<CommuteNote, string>;
   highlights!: Table<TextHighlight, string>;
   settings!: Table<{ key: string; value: any }, string>;
+  srsCards!: Table<SRSCard, string>;
+  readingAnalytics!: Table<ReadingAnalyticsSession, string>;
 
   constructor() {
     super('StudentsCompanionDB');
@@ -14,6 +16,10 @@ export class CompanionDatabase extends Dexie {
       notes: 'id, documentId, category, createdAt, timestampSeconds',
       highlights: 'id, documentId, chapterIndex, createdAt',
       settings: 'key'
+    });
+    this.version(3).stores({
+      srsCards: 'id, word, nextReviewDate, interval, easeFactor',
+      readingAnalytics: 'id, date, domain, lexileLevel, wpm'
     });
   }
 }

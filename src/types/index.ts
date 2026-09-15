@@ -150,3 +150,80 @@ export interface UserLiteracyProgress {
   favoriteWords: string[];
 }
 
+export type LexileBand = '800L' | '1000L' | '1200L';
+export type ReadingDomain = 'Philosophy' | 'Science' | 'Literature' | 'CurrentAffairs';
+
+export interface MorphemeBreakdown {
+  prefix?: string;
+  root: string;
+  suffix?: string;
+  meaning: string;
+}
+
+export interface OrthographicRule {
+  title: string;
+  explanation: string;
+  example: string;
+}
+
+export interface TargetWordDetail {
+  word: string;
+  phonetic: string;
+  syllables: string[];
+  partOfSpeech: string;
+  definition: string;
+  morphemes: MorphemeBreakdown;
+  orthographicRule: OrthographicRule;
+  exampleSentence: string;
+}
+
+export interface PassageCheckpoint {
+  id: string;
+  wordOffset: number; // approximate word threshold where checkpoint occurs
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+export interface ImmersionPassage {
+  id: string;
+  domain: ReadingDomain;
+  lexile: LexileBand;
+  title: string;
+  subtitle: string;
+  wordCount: number;
+  content: string;
+  targetWords: TargetWordDetail[];
+  checkpoints: PassageCheckpoint[];
+}
+
+export interface SRSCard {
+  id: string;
+  word: string;
+  easeFactor: number; // default 2.5
+  interval: number; // in days
+  repetitions: number;
+  nextReviewDate: string; // YYYY-MM-DD
+  lastPerformanceRating: number; // 0 to 5
+}
+
+export interface ReadingAnalyticsSession {
+  id: string;
+  date: string;
+  domain: ReadingDomain;
+  lexileLevel: LexileBand;
+  wpm: number;
+  wordsRead: number;
+  orthographicAccuracy: number;
+  durationSeconds: number;
+}
+
+export interface SentenceEvaluationResult {
+  isValid: boolean;
+  score: number; // 0-100
+  syntaxFeedback: string;
+  semanticFeedback: string;
+  suggestedImprovement?: string;
+}
+
